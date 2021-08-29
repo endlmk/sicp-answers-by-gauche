@@ -219,4 +219,44 @@
 ;;(sine 12.15)=(p (p (p (p (p (sine 0.05))))))
 
 ;;空間、ステップ数ともにΘ(log3_a)
-;;
+
+;;ex1-16
+(define (fast-expt-iter a b n)
+  (cond ((= n 0) a)
+	((even? n) (fast-expt-iter a (* b b) (/ n 2)))
+	(else (fast-expt-iter (* a b) b (- n 1)))))
+(define (fast-expt b n) (fast-expt-iter 1 b n))
+
+;;ex1-17
+(define (** a b)
+  (if (= b 0)
+      0
+      (+ a (** a (- b 1)))))
+(define (fast** a b)
+  (cond ((= b 0) 0)
+	((even? b) (+ (fast** a (/ b 2)) (fast** a (/ b 2))))
+	(else (+ a (fast** a (- b 1))))))
+
+;;ex1-18
+(define (fast**-iter r a b)
+  (cond ((= b 0) r)
+	((even? b) (fast**-iter r (+ a a) (/ b 2)))
+	(else (fast**-iter (+ r a) a (- b 1)))))    
+(define (fast**2 a b) (fast**-iter 0 a b))
+
+;;ex1-19
+(define (fib n)
+  (fib-iter 1 0 0 1 n))
+(define (fib-iter a b p q count)
+  (cond ((= count 0) b)
+	((even? count)
+	 (fib-iter a
+		   b
+		   (+ (* p p) (* q q))
+		   (+ (* q q) (* 2 p q))
+		   (/ count 2)))
+	(else (fib-iter (+ (* b q) (* a q) (* a p))
+			(+ (* b p) (* a q))
+			p
+			q
+			(- count 1)))))
