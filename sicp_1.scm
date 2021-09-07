@@ -260,3 +260,99 @@
 			p
 			q
 			(- count 1)))))
+
+;;ex1-20
+(define (gcd a b)
+  (if (= b 0)
+      a
+      (gcd b (remainder a b))))
+;;正規順序評価
+(gcd 206 40)
+(if (= 40 0) 206 (gcd 40 (remainder 206 40)))
+(gcd 40 (remainder 206 40))
+(if (= (remainder 206 40) 0) (remainder 206 40) (gcd (remainder 206 40) (remainder 40 (remainder 206 40))))
+(gcd (remainder 206 40) (remainder 40 (remainder 206 40))) ;;1
+(if (= (remainder 40 (remainder 206 40)) 0) (remainder 206 40) (gcd (remainder 40 (remainder 206 40)) (remainder (remainder 206 40) (remainder 40 (remainder 206 40))))) ;;1
+(gcd (remainder 40 (remainder 206 40)) (remainder (remainder 206 40) (remainder 40 (remainder 206 40)))) ;;3
+(if (= (remainder (remainder 206 40) (remainder 40 (remainder 206 40))) 0) (remainder 40 (remainder 206 40)) (gcd (remainder (remainder 206 40) (remainder 40 (remainder 206 40))) (remainder (remainder 40 (remainder 206 40)) (remainder (remainder 206 40) (remainder 40 (remainder 206 40))))))
+(gcd (remainder (remainder 206 40) (remainder 40 (remainder 206 40))) (remainder (remainder 40 (remainder 206 40)) (remainder (remainder 206 40) (remainder 40 (remainder 206 40))))) ;;7
+(if (= (remainder (remainder 40 (remainder 206 40)) (remainder (remainder 206 40) (remainder 40 (remainder 206 40)))) 0) (remainder (remainder 206 40) (remainder 40 (remainder 206 40))) (gcd (remainder (remainder 40 (remainder 206 40)) (remainder (remainder 206 40) (remainder 40 (remainder 206 40)))) (remainder (remainder 206 40) (remainder 40 (remainder 206 40)) (remainder  (remainder (remainder 40 (remainder 206 40)) (remainder (remainder 206 40) (remainder 40 (remainder 206 40)))))))) ;;7
+(remainder (remainder 206 40) (remainder 40 (remainder 206 40)));;14
+2 ;;18
+
+;;適用順序評価
+(gcd 206 40)
+(if (= 40 0) 206 (gcd 40 (remainder 206 40)))
+(gcd 40 (remainder 206 40))
+(gcd 40 6);;1
+(if (= 6 0) 40 (gcd 6 (remainder 40 6)));;1
+(gcd 6 (remainder 40 6));;1
+(gcd 6 4);;2
+(if (= 4 0) 6 (gcd 4 (remainder 6 4)));;2
+(gcd 4 (remainder 6 4));;2
+(gcd 4 2);;3
+(if (= 2 0) 4 (gcd 2 (remainder 4 2)));;3
+(gcd 2 (remainder 4 2));;3
+(gcd 2 0);;4
+(if (= 0 0) 2 (gcd 0 (remainder 2 0)));;4
+2;;4
+
+;;ex1-21
+(define (smallest-divisor n) (find-divisor n 2))
+(define (find-divisor n test-divisor)
+  (cond ((> (square test-divisor) n) n)
+	((divides? test-divisor n) test-divisor)
+	(else (find-divisor n (+ test-divisor 1)))))
+(define (divides? a b) (= (remainder b a) 0))
+
+;;ex1-22
+(define (timed-prime-test n)
+  (newline)
+  (display n)
+  (start-prime-test n (runtime)))
+(define (start-prime-test n start-time)
+  (if (prime? n)
+      (report-prime (- (runtime) start-time))))
+(define (report-prime elapsed-time)
+  (display " *** ")
+  (display elapsed-time))
+(define (runtime)
+  (use srfi-11)
+  (let-values (((a b) (sys-gettimeofday)))
+    (+ (* a 1000000) b)))
+(define (prime? n)
+  (= n (smallest-divisor n)))
+(define (search-for-primes a b)
+  (cond ((even? a) (search-for-primes (+ a 1) b))
+	((> a b) #f)
+	(else (begin (timed-prime-test a)
+		     (search-for-primes (+ a 2) b)))))
+
+;;ex1-23
+(define (smallest-divisor1 n) (find-divisor1 n 2))
+(define (find-divisor1 n test-divisor)
+  (cond ((> (square test-divisor) n) n)
+	((divides? test-divisor n) test-divisor)
+	(else (find-divisor1 n (if (= test-divisor 2) 3 (+ test-divisor 2))))))
+(define (divides? a b) (= (remainder b a) 0))
+(define (prime? n)
+  (= n (smallest-divisor1 n)))
+
+;;ex1-24
+(define (expmod base exp m)
+  (cond ((= exp 0) 1)
+	((even? exp) (remainder (square (expmod base (/ exp 2) m)) m))
+	(else (remainder (* base (expmod base (- exp 1) m)) m))))
+(define (random num)
+  (use srfi-27)
+  (* (random-integer num) 1.0))
+(define (fermat-test n)
+  (define (try-it a)
+    (= (expmod a n n) a))
+  (try-it (+ 1 (random (- n 1)))))
+(define (fast-prime? n times)
+  (cond ((= times 0) #t)
+	((fermat-test n) (fast-prime? n (- times 1)))
+	(else #f)))
+(define (prime? n)
+  (fast-prime? n 1))
