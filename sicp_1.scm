@@ -364,3 +364,33 @@
 ;;ex1-26
 ;;二乗の際にsquareを使わず、expmodを二回呼び出している
 ;;logn回の再帰プロセスがそれぞれ二回expmodを呼び出すため、2^logn回の呼び出しとなり、結果Θ(n)となる。
+
+;;ex1-27
+(define (fermat-test a n)
+  (= (expmod a n n) a))
+(define (test-carmichael n)
+  (fermat-test-iter 1 n))
+(define (fermat-test-iter a n)
+  (cond ((= a n) #t)
+	(else (if (fermat-test a n)
+		  (fermat-test-iter (+ a 1) n)
+		  #f))))
+
+;;ex1-28
+(define (expmod-s base exp m)
+  (cond ((= exp 0) 1)
+	(else (if (even? exp)
+		  (if (and (not (= base 1)) (not (= base (- m 1))) (= (remainder (square base) m) 1))
+		      0
+		      (remainder (square (expmod-s base (/ exp 2) m)) m))
+		  (remainder (* base (expmod-s base (- exp 1) m)) m)))))
+(define (fermat-test-m n)
+  (define (try-it a)
+    (= (expmod-s a (- n 1) n) 1))
+  (try-it (+ 1 (random (- n 1)))))
+(define (fast-prime?-m n times)
+  (cond ((= times 0) #t)
+	((fermat-test-m n) (fast-prime?-m n (- times 1)))
+	(else #f)))
+(define (prime?-m n)
+  (fast-prime?-m n 10))
