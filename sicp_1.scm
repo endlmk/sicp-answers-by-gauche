@@ -394,3 +394,24 @@
 	(else #f)))
 (define (prime?-m n)
   (fast-prime?-m n 10))
+
+;;ex1-29
+(define (sum term a next b)
+  (if (> a b)
+      0
+      (+ (term a)
+	 (sum term (next a) next b))))
+
+(define (integral f a b dx)
+  (define (add-dx x)
+    (+ x dx))
+  (* (sum f (+ a (/ dx 2.0)) add-dx b) dx))
+
+(define (inc n) (+ n 1))
+(define (simpson f a b n)
+  (define (simpson-iter count)
+    (cond ((= count 0) (f a))
+	  ((= count n) (f b))
+	  ((even? count) (* 2 (f (+ a (* count (/ (- b a) n)))))) 
+	  (else (* 4 (f (+ a (* count (/ (- b a) n))))))))
+  (* (/ (/ (- b a) n) 3.0) (sum simpson-iter 0 inc n)))
