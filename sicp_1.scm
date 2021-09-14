@@ -415,3 +415,62 @@
 	  ((even? count) (* 2 (f (+ a (* count (/ (- b a) n)))))) 
 	  (else (* 4 (f (+ a (* count (/ (- b a) n))))))))
   (* (/ (/ (- b a) n) 3.0) (sum simpson-iter 0 inc n)))
+
+;;ex1-30
+(define (sum-loop term a next b)
+  (define (iter a result)
+    (if (> a b)
+	result
+	(iter (next a) (+ result (term a)))))
+  (iter a 0))
+	
+;;ex1-31
+;;a
+(define (id x) x)
+(define (product f a next b)
+  (if (> a b)
+      1
+      (* (f a) (product f (next a) next b))))
+(define (factorial n) (product id 1 inc n))
+(define (termforpi n)
+  (/ (* (+ (div n 2) 1) 2.0) (+ (* (div (+ n 1) 2) 2) 1.0)))
+(define (calcpi n) (product termforpi 1 inc n))
+
+;;b
+(define (product-loop f a next b)
+  (define (iter a result)
+    (if (> a b)
+	result
+	(iter (next a) (* result (f a)))))
+  (iter a 1))
+
+;;ex1-32
+;;a
+(define (accumulate combiner null-value term a next b)
+  (if (> a b)
+      null-value
+      (combiner (term a) (accumulate combiner null-value term (next a) next b))))
+(define (add a b) (+ a b))
+(define (sum1 term a next b) (accumulate add 0 term a next b))
+(define (mult a b) (* a b))
+(define (product1 term a next b) (accumulate mult 1 term a next b))
+;;b
+(define (accumulate-loop combiner null-value term a next b)
+  (define (iter a result)
+    (if (> a b)
+	result
+	(iter (next a) (combiner result (term a)))))
+  (iter a null-value))
+
+;;ex1-33
+(define (filtered-accumulate combiner null-value term a next b filt)
+  (if (> a b)
+      null-value
+      (if (filt a)
+	  (combiner (term a) (filtered-accumulate combiner null-value term (next a) next b filt))
+	  (filtered-accumulate combiner null-value term (next a) next b filt))))
+(define (sum-primes a b) (filtered-accumulate add 0 id a inc b prime?))
+(define (product-coprime n)
+  (define (coprime? a)
+    (= (gcd a n) 1))
+  (filtered-accumulate mult 1 id 1 inc n coprime?))
