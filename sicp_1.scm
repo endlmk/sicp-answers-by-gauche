@@ -474,3 +474,10 @@
   (define (coprime? a)
     (= (gcd a n) 1))
   (filtered-accumulate mult 1 id 1 inc n coprime?))
+
+;;ex1-34
+(define (f g) (g 2))
+(f f)
+(f (lambda (g) (g 2)))
+((lambda (g) (g 2)) 2)
+(2 2)
