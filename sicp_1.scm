@@ -496,3 +496,21 @@
   (try first-guess))
 (define (golden-ratio)
   (fixed-point (lambda (x) (+ 1 (/ 1 x))) 1.0))
+
+;;ex1-36
+(define (fixed-point1 f first-guess)
+  (define (close-enough? v1 v2)
+    (< (abs (- v1 v2))
+       tolerance))
+  (define (try guess)
+    (let ((next (f guess)))
+      (display next)
+      (newline)
+      (if (close-enough? guess next)
+	  next
+	  (try next))))
+  (try first-guess))
+(define (x-pow-x)
+  (fixed-point1 (lambda (x) (/ (log 1000) (log x))) 2.0))
+(define (x-pow-x-ave)
+  (fixed-point1 (lambda (x) (/ (+ x (/ (log 1000) (log x))) 2.0)) 2.0))
