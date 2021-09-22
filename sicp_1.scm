@@ -514,3 +514,37 @@
   (fixed-point1 (lambda (x) (/ (log 1000) (log x))) 2.0))
 (define (x-pow-x-ave)
   (fixed-point1 (lambda (x) (/ (+ x (/ (log 1000) (log x))) 2.0)) 2.0))
+
+;;ex1-37
+(define (cont-frac n d k)
+  (define (cont-frac-iter n d k c)
+    (cond ((= c k) (/ (n c) (d c)))
+	  (else (/ (n c) (+ (d c) (cont-frac-iter n d k (+ c 1)))))))
+  (cont-frac-iter n d k 1))
+;; k = 100->1.618033988749895
+(define (cont-frac1 n d k)
+  (define (cont-frac-loop n d k c r)
+    (cond ((= c 1) r)
+	  (else (cont-frac-loop n d k (- c 1) (/ (n c) (+ (d c) r))))))
+  (cont-frac-loop n d k k (/ (n c) (d c))))
+
+
+;;ex1-38
+(define (d-for-e n)
+  (cond ((= n 1) 1)
+	((= n 2) 2)
+	((= 0 (mod (- n 2) 3)) (* (+ (div (- n 2) 3) 1) 2))
+	(else 1)))
+(define (napier k)
+  (cont-frac (lambda (i) 1.0)
+	     d-for-e
+	     k))
+
+;;ex1-39
+(define (n-for-tan n x)
+  (cond ((= n 1) x)
+	(else (* (square x) -1.0))))
+(define (d-for-tan d)
+  (- (* 2 d) 1))
+(define (tan-cf x k)
+  (cont-frac (lambda (n) (n-for-tan n x)) d-for-tan k))
