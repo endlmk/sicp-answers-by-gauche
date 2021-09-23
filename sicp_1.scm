@@ -548,3 +548,71 @@
   (- (* 2 d) 1))
 (define (tan-cf x k)
   (cont-frac (lambda (n) (n-for-tan n x)) d-for-tan k))
+
+;;ex1-40
+(define (deriv g)
+  (lambda (x) (/ (- (g (+ x dx)) (g x)) dx)))
+(define dx 0.00001)
+(define (newton-transform g)
+  (lambda (x) (- x (/ (g x) ((deriv g) x)))))
+(define (newton-method g guess)
+  (fixed-point (newton-transform g) guess))
+(define (cubic a b c)
+  (lambda (x) (+ (* x x x) (* a x x) (* b x) c)))
+
+;;ex1-41
+(define (double g)
+  (lambda (x) (g (g x))))
+(((double (double double)) inc) 5)
+(((lambda (x) ((double double) ((double double) x))) inc) 5)
+(((double double) ((double double) inc)) 5)
+(((lambda (x) (double (double x))) ((lambda (x) (double (double x))) inc)) 5)
+(((lambda (x) (double (double x))) ((double (double inc)))) 5)
+(((lambda (x) (double (double x))) ((double (lambda (x) (inc (inc x)))))) 5)
+(((lambda (x) (double (double x))) (lambda (x) (inc (inc (inc (inc x)))))) 5)
+(lambda (x) (inc (inc (inc (inc (inc (inc (inc (inc (inc (inc (inc (inc (inc (inc (inc (inc x)))))))))))))))) 5)
+21
+
+;;ex1-42
+(define (compose f g)
+  (lambda (x) (f (g x))))
+
+;;ex1-43
+(define (repeated f n)
+  (cond ((= n 1) f)
+	(else (repeated (compose f f) (- n 1)))))
+
+;;ex1-44
+(define (smooth f)
+  (lambda (x) (/ (+ (f (- x dx)) (f x) (f (+ x dx))) 3)))
+(define (n-fold-smooth f n)
+  (repeated (smooth f) n))
+
+;;ex1-45
+(define (average a b) (/ (+ a b) 2.0))
+(define (average-damp f)
+  (lambda (x) (average x (f x))))
+(define (quad-root x guess)
+  (fixed-point ((repeated average-damp 2) (lambda (y) (/ x (expt y 3)))) guess))
+(define (nth-root x n guess)
+  (let ((c (round (/ (log n) (log 2)))))
+    (fixed-point ((repeated average-damp c) (lambda (y) (/ x (expt y (- n 1))))) guess)))
+  
+;;ex1-46
+(define (iterative-improve converged improve)
+  (lambda (x) (if (converged x)
+		  x
+		  ((iterative-improve converged improve) (improve x))))) 
+(define (improve guess x)
+  (average guess (/ x guess)))
+(define (good-enough? guess x)
+  (< (abs (- (square guess) x)) 0.001)
+(define (square1 x)
+  ((iterative-improve (lambda (g) (good-enough? g x)) (lambda (g) (improve g x))) 1.0))
+(define tolerance 0.00001)
+(define (fixed-point2 f first-guess)
+  ((iterative-improve
+    (lambda (x) (< (abs (- x (f x))) tolerance))
+    f)
+   first-guess))
+
