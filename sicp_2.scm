@@ -50,3 +50,11 @@
   (* (abs (x-point (cdr r))) 2))
 (define (y-length r)
   (* (abs (y-point (cdr r))) 2))
+
+;;ex2-4
+(define (cons x y)
+  (lambda (m) (m x y)))
+(define (car z)
+  (z (lambda (p q) p)))
+(define (cdr z)
+  (z (lambda (p q) q)))
