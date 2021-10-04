@@ -84,3 +84,57 @@
 (lambda (f) (lambda (x) (f (f x))))
 (define (plus a b)
   (lambda (f) (lambda (x) ((a f) ((b f) x)))))
+
+;;ex2-7
+(define (make-interval a b) (cons a b))
+(define (upper-bound i) (cdr i))
+(define (lower-bound i) (car i))
+
+;;ex2-8
+(define (sub-interval a b)
+  (make-interval (- (lower-bound a) (upper-bound b))
+		 (- (upper-bound a) (lower-bound b))))
+
+;;ex2-9
+(define (width i)
+  (/ (- (upper-bound i) (lower-bound i)) 2))
+(define (add-interval x y)
+  (make-interval (+ (lower-bound x) (lower-bound y))
+		 (+ (upper-bound x) (upper-bound y))))
+(width (add-interval a b))
+(/ (- (+ (upper-bound a) (upper-bound b)) (+ (lower-bound a) (lower-bound b))) 2)
+(/ (+ (- (upper-bound a) (lower-bound a)) (- (upper-bound b) (lower-bound b))) 2)
+(/ (+ (* (width a) 2) (* (width b) 2)) 2)
+(width (sub-interval a b))
+(/ (- (- (upper-bound a) (lower-bound b)) (- (lower-bound a) (upper-bound b))) 2)
+(/ (+ (- (upper-bound b) (lower-bound b)) (- (upper-bound a) (lower-bound a))) 2)
+(/ (+ (* (width a) 2) (* (width b) 2)))
+;;mul-interval
+;;(1 2) (3 4) -> (3 8) width:2.5
+;;(1 2) (5 6) -> (5 12) width 3.5
+;;div-interval
+;;(1 2) (3 4) -> (1/4 2/3) width 5/24
+;;(1 2) (5 6) -> (1/6 2/5) width 7/60
+
+;;ex2-10
+(define (div-interval x y)
+  (if (> (* (lower-bound y) (upper-bound y)) 0)
+      0
+      (mul-interval
+       x
+       (make-interval (/ 1.0 (upper-bound y))
+		      (/ 1.0 (lower-bound y))))))
+
+;;ex2-11
+(define (mul-interval x y)
+  (cond ((and (>= (lower-bound x) 0) (>= (lower-bound y) 0)) (make-interval (* (lower-bound x) (lower-bound y)) (* (upper-bound x) (upper-bound y))))
+	((and (< (upper-bound x) 0) (>= (lower-bound y) 0)) (make-interval (* (lower-bound x) (upper-bound y)) (* (upper-bound x) (lower-bound y))))
+	((and (< (lower-bound x) 0) (< (lower-bound y) 0)) (make-interval (* (upper-bound x) (upper-bound y)) (* (lower-bound x) (lower-bound y))))
+	((and (>= (lower-bound x) 0) (< (lower-bound y) 0)) (make-interval (* (upper-bound x) (lower-bound y)) (* (lower-bound x) (upper-bound y))))
+	((and (< (* (lower-bound x) (upper-bound x)) 0) (>= (lower-bound y) 0)) (make-interval (* (lower-bound x) (upper-bound y)) (* (upper-bound x) (upper-bound y))))
+	((and (< (upper-bound x) 0) (< (* (lower-bound y) (upper-bound y)) 0)) (make-interval (* (lower-bound x) (upper-bound y)) (* (lower-bound x) (lower-bound y))))
+	((and (< (* (lower-bound x) (upper-bound x)) 0) (< (lower-bound y) 0)) (make-interval (* (upper-bound x) (lower-bound y)) (* (lower-bound x) (lower-bound y))))
+	((and (>= (lower-bound x) 0) (< (* (lower-bound y) (upper-bound y)) 0)) (make-interval (* (upper-bound x) (lower-bound y)) (* (upper-bound x) (upper-bound y))))
+	(else (make-interval (min (* (lower-bound x) (upper-bound y)) (* (upper-bound x) (lower-bound y))) (max (* (lower-bound x) (lower-bound y)) (* (upper-bound x) (upper-bound y)))))))
+
+
