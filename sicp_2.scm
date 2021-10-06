@@ -118,7 +118,7 @@
 
 ;;ex2-10
 (define (div-interval x y)
-  (if (> (* (lower-bound y) (upper-bound y)) 0)
+  (if (< (* (lower-bound y) (upper-bound y)) 0)
       0
       (mul-interval
        x
@@ -137,4 +137,35 @@
 	((and (>= (lower-bound x) 0) (< (* (lower-bound y) (upper-bound y)) 0)) (make-interval (* (upper-bound x) (lower-bound y)) (* (upper-bound x) (upper-bound y))))
 	(else (make-interval (min (* (lower-bound x) (upper-bound y)) (* (upper-bound x) (lower-bound y))) (max (* (lower-bound x) (lower-bound y)) (* (upper-bound x) (upper-bound y)))))))
 
+;;ex2-12
+(define (make-center-width c w)
+  (make-interval (- c w) (+ c w)))
+(define (make-center-percent c p)
+  (let ((w (abs (* c (/ p 100)))))
+    (make-center-width c w)))  
+(define (center i)
+  (/ (+ (lower-bound i) (upper-bound i)) 2))
+(define (width i)
+  (/ (- (upper-bound i) (lower-bound i)) 2))
+(define (percent i)
+  (* (/ (width i) (abs (center i))) 100))
 
+;;ex2-13
+;;各インターバルの許容誤差をp1,p2とすると、積の許容誤差の近似値はp1+p2となる
+;;(c1, p1) (c2, p2)として
+;;mult = (c1 - c1*p1/100)*(c2 -c2*p2/100) (c1 + c1*p1/100)*(c2 + c2*p2/100)
+;;≒ (c1 * c2 - (p1+p2)*c1*c2/100) (c1*c2 + (p1+p2)*c1*c2/100)
+;;p = (((p1+p2)*c1*c2/100) / (c1*c2)) * 100 = p1+p2
+
+;;ex2-14
+(define (par1 r1 r2)
+  (div-interval (mul-interval r1 r2) (add-interval r1 r2)))
+(define (par2 r1 r2)
+  (let ((one (make-interval 1 1)))
+    (div-interval one (add-interval (div-interval one r1) (div-interval one r2)))))
+
+;;ex2-15
+;;区間の変数の数がpar1のほうが多い。区間の演算が多いほど誤差が広がるため、par1のほうが誤差が大きい
+
+;;ex2-16
+;;幅のある区間では、加法、乗法の逆源が存在しないため。一般の式に対して誤差が最小となるような代数的変形をコンピュータで実行することはできない。
