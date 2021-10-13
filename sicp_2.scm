@@ -169,3 +169,41 @@
 
 ;;ex2-16
 ;;幅のある区間では、加法、乗法の逆源が存在しないため。一般の式に対して誤差が最小となるような代数的変形をコンピュータで実行することはできない。
+
+;;ex2-17
+(define (last-pair items)
+  (if (null? (cdr items))
+      (car items)
+      (last-pair (cdr items))))
+
+;;ex2-18
+(define (reverse items)
+  (define (reverse-iter a r)
+    (if (null? a)
+	r
+	(reverse-iter (cdr a) (cons (car a) r))))
+  (reverse-iter items ()))
+
+;;ex2-19
+(define (cc amount coin-values)
+  (cond ((= amount 0) 1)
+	((or (< amount 0) (no-more? coin-values)) 0)
+	(else
+	 (+ (cc amount (except-first-domination coin-values))
+	    (cc (- amount (first-domination coin-values)) coin-values)))))
+(define (first-domination coins) (car coins))
+(define (except-first-domination coins) (cdr coins))
+(define (no-more? coins) (null? coins))
+;;順序は影響しない。
+
+;;ex2-20
+(define (same-parity x . w)
+  (define (filter-by-parity f w)
+    (if (null? w)
+	()
+	(if (f (car w))
+	    (cons (car w) (filter-by-parity f (cdr w)))
+	    (filter-by-parity f (cdr w)))))
+  (if (odd? x)
+      (cons x (filter-by-parity odd? w))
+      (cons x (filter-by-parity even? w))))
