@@ -207,3 +207,21 @@
   (if (odd? x)
       (cons x (filter-by-parity odd? w))
       (cons x (filter-by-parity even? w))))
+
+;;ex2-21
+(define (square-list items)
+  (if (null? items)
+      ()
+      (cons (square (car items)) (square-list (cdr items)))))
+(define (square-list items)
+  (map square items))
+
+;;ex2-22
+;;空リストに対してにconsで引数の先頭要素から結合するため、逆順になる
+;;consの第一引数に結合されたリスト渡され、それらのが先頭がつながったリストになってしまう。
+
+;;ex2-23
+(define (for-each1 f items)
+  (if (null? items)
+      #t
+      (and (f (car items)) (for-each1 f (cdr items)))))
