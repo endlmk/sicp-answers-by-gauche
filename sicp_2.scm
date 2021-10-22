@@ -225,3 +225,76 @@
   (if (null? items)
       #t
       (and (f (car items)) (for-each1 f (cdr items)))))
+
+;;ex2-24
+;;(list 1 (list 2 (list 3 4)))
+;; /\
+;;1  (list 2 (list 3 4))
+;;   /  \
+;;  2    (list 3 4)
+;;        /  \
+;;        3   4
+
+;;ex2-25
+;;(1 3 (5 7) 9)
+(car (cdr (car (cdr (cdr x)))))
+;;((7))
+(car (car x))
+;;(1 (2 (3 (4 (5 (6 7))))))
+(car (cdr (car (cdr (car (cdr (car (cdr (car (cdr (car (cdr x))))))))))))
+
+;;ex2-26
+((append x y)) ;;(1 2 3 4 5 6)
+(cons x y) ;; ((1 2 3) 4 5 6)
+(list x y) ;; ((1 2 3) (4 5 6))
+
+;;ex2-27
+(define (deep-reverse items)
+  (if (pair? items)
+      (append (deep-reverse (cdr items)) (list (deep-reverse (car items))))
+      items))
+    
+;;ex2-28
+(define (fringe items)
+  (if (pair? items)
+      (append (fringe (car items)) (fringe (cdr items)))
+      (if (null? items)
+	  items
+	  (list items))))
+
+;;ex2-29
+(define (make-mobile left right)
+  (list left right))
+
+(define (make-branch length structure)
+  (list length structure))
+
+(define (left-branch m)
+  (car m))
+(define (right-branch m)
+  (cadr m))
+(define (branch-length b)
+  (car b))
+(define (branch-structure b)
+  (cadr b))
+
+(define (total-weight m)
+  (let ((lb (branch-structure (left-branch m)))
+	(rb (branch-structure (right-branch m))))
+    (cond ((and (pair? lb) (pair? rb)) (+ (total-weight lb) (total-weight rb)))
+	  ((pair? lb) (+ (total-weight lb) rb))
+	  ((pair? rb) (+ lb (total-weight rb)))
+	  (else (+ lb rb)))))
+
+(define (balanced m)
+  (let ((lb (branch-structure (left-branch m)))
+	(ll (branch-length (left-branch m)))
+	(rb (branch-structure (right-branch m)))
+	(rl (branch-length (right-branch m)))))
+  (cond ((and (pair? lb) (pair? rb)) (and (balanced lb) (balanced rb) (= (* ll (total-weight lb)) (* rl (total-weight rb)))))
+	((pair? lb) (and (balanced lb) (= (* ll (total-weight lb)) (* rl rb))))
+	((pair? rb) (and (balanced rb) (= (* ll lb) (* rl (total-weight rb)))))
+	(else (= (* ll lb) (* rl rb)))))
+
+;; listがconsになった場合、right-branch,branch-structureをcdrにすればよい
+
