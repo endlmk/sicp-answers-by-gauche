@@ -298,3 +298,40 @@
 
 ;; listがconsになった場合、right-branch,branch-structureをcdrにすればよい
 
+;;ex2-30
+(define (square-tree1 tree)
+  (cond ((null? tree) ())
+	((not (pair? tree)) (square tree))
+	(else (cons (square-tree1 (car tree))
+		    (square-tree1 (cdr tree))))))
+(define (square-tree2 tree)
+  (map (lambda (sub-tree)
+	 (if (pair? sub-tree)
+	     (square-tree2 sub-tree)
+	     (square sub-tree)))
+       tree))
+
+;;ex2-31
+(define (tree-map1 f tree)
+  (cond ((null? tree) ())
+	((not (pair? tree)) (f tree))
+	(else (cons (tree-map1 f (car tree))
+		    (tree-map1 f (cdr tree))))))
+(define (tree-map2 f tree)
+  (map (lambda (sub-tree)
+	 (if (pair? sub-tree)
+	     (tree-map2 f sub-tree)
+	     (f sub-tree)))
+       tree))
+
+;;ex2-32
+(define (subsets s)
+  (if (null? s)
+      (list ())
+      (let ((rest (subsets (cdr s))))
+	(append rest (map (lambda (item) (append item (list (car s)))) rest)))))
+;; subsetsの対象のリストのうち、先頭とその後を分けて考える
+;; subsetsの結果は先頭の後のリストに対してsubsetsした結果＋その結果に先頭の要素を加えたものとなるため。
+
+      
+  
