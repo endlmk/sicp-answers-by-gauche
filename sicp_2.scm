@@ -333,5 +333,32 @@
 ;; subsetsの対象のリストのうち、先頭とその後を分けて考える
 ;; subsetsの結果は先頭の後のリストに対してsubsetsした結果＋その結果に先頭の要素を加えたものとなるため。
 
-      
-  
+;;ex2-33
+(define (accumulate op initial sequence)
+  (if (null? sequence)
+      initial
+      (op (car sequence)
+	  (accumulate op initial (cdr sequence)))))
+(define (map1 p sequence)
+  (accumulate (lambda (x y) (cons (p x) y)) () sequence))
+(define (append1 seq1 seq2)
+  (accumulate cons seq2 seq1))
+(define (length1 sequence)
+  (accumulate (lambda (x y) (+ y 1)) 0 sequence))
+
+;;ex2-34
+(define (horner-eval x coefficients-sequence)
+  (accumulate (lambda (this-coeff higher-terms) (+ (* higher-terms x) this-coeff))
+	      0
+	      coefficients-sequence))
+
+;;ex2-35
+(define (count-leaves t)
+  (accumulate + 0 (map (lambda (x) (if (pair? x) (count-leaves x) 1)) t)))
+
+;;ex2-36
+(define (accumulate-n op init seqs)
+  (if (null? (car seqs))
+      ()
+      (cons (accumulate op init (map car seqs))
+	    (accumulate-n op init (map cdr seqs)))))
