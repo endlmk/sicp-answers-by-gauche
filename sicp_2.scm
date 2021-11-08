@@ -362,3 +362,37 @@
       ()
       (cons (accumulate op init (map car seqs))
 	    (accumulate-n op init (map cdr seqs)))))
+
+;;ex2-37
+(define (dot-product v w)
+  (accumulate + 0 (map * v w)))
+(define (matrix-*-vector m v)
+  (map (lambda (w) (dot-product w v)) m))
+(define (transpose mat)
+  (accumulate-n cons () mat))
+(define (matrix-*-matrix m n)
+  (let ((cols (transpose n)))
+    (map (lambda (v) (matrix-*-vector m v)) cols)))
+
+;;ex2-38
+(define (fold-left op initial sequence)
+  (define (iter result rest)
+    (if (null? rest)
+	result
+	(iter (op result (car rest))
+	      (cdr rest))))
+  (iter initial sequence))
+(define (fold-right op initial sequence)
+  (accumulate op initial sequence))
+
+(fold-right / 1 (list 1 2 3)) ;; (1 / (2 / (3 / 1))) = 3/2
+(fold-left / 1 (list 1 2 3)) ;; (((1 / 1) / 2) / 3) = 1/6
+(fold-right list () (list 1 2 3)) ;; (1 (2 (3 ())))
+(fold-left list () (list 1 2 3)) ;; (((() 1) 2) 3)
+;; fold-leftとfold-rightが等しくなるためには(op x y) = (op y x)が必要
+
+;;ex2-39
+(define (reverse sequence)
+  (fold-right (lambda (x y)  (append y (list x))) () sequence))
+(define (reverse sequence)
+  (fold-left (lambda (x y) (append (list y) x)) () sequence))
