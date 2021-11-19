@@ -396,3 +396,31 @@
   (fold-right (lambda (x y)  (append y (list x))) () sequence))
 (define (reverse sequence)
   (fold-left (lambda (x y) (append (list y) x)) () sequence))
+
+;;ex2-40
+(define (enumerate-interval low high)
+  (if (> low high)
+      ()
+      (cons low (enumerate-interval (+ low 1) high))))
+(define (flatmap proc seq)
+  (accumulate append () (map proc seq)))
+(define (unique-pairs n)
+  (flatmap (lambda (i) (map (lambda (j) (list i j)) (enumerate-interval 1 (- i 1)))) (enumerate-interval 1 n)))
+(define (prime-sum? pair)
+  (prime? (+ (car pair) (cadr pair))))
+(define (make-pair-sum pair)
+  (list (car pair) (cadr pair) (+ (car pair) (cadr pair))))
+(define (prime-sum-pairs n)
+  (map make-pair-sum
+       (filter prime-sum? (unique-pairs n))))
+
+;;ex2-41
+(define (unique-triples n)
+  (flatmap (lambda (i) (map (lambda (p) (cons i p)) (unique-pairs (- i 1)))) (enumerate-interval 1 n)))
+(define (triple-sum triple)
+  (+ (car triple) (cadr triple) (caddr triple)))
+(define (find-triple-sum n s)
+  (filter (lambda (t) (= (triple-sum t) s)) (unique-triples n)))
+
+
+
