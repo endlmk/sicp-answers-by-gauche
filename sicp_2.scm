@@ -459,4 +459,4 @@
   
 ;;ex2-43
 ;;queen-colでkを一つ減らす際に毎回k=0までのqueen-colの結果を計算している
-;;T^2/2の時間がかかる
+;;それぞれのqueen-colでさらにqueen-colを呼び出すため、T * board-size ^ board-sizeとなる。
