@@ -422,5 +422,41 @@
 (define (find-triple-sum n s)
   (filter (lambda (t) (= (triple-sum t) s)) (unique-triples n)))
 
+;;ex2-42
+(define (queens board-size)
+  (define empty-board (map (lambda (p) 0) (enumerate-interval 1 board-size)))
+  (define (queen-cols k)
+    (if (= k 0)
+	(list empty-board)
+	(filter
+	 (lambda (positions) (safe? k positions))
+	 (flatmap
+	  (lambda (rest-of-queens)
+	    (map (lambda (new-row)
+		   (adjoin-position
+		    new-row k rest-of-queens))
+		 (enumerate-interval 1 board-size)))
+	  (queen-cols (- k 1))))))
+  (queen-cols board-size))
 
+(define (adjoin-position n k r)
+  (define (adjoin-position-iter p n k r)
+    (cond ((null? r) ())
+	  ((= p k) (cons n (adjoin-position-iter (+ p 1) n k (cdr r))))
+	  (else (cons (car r) (adjoin-position-iter (+ p 1) n k (cdr r))))))
+  (adjoin-position-iter 1 n k r))
 
+(define (safe? k position)
+  (let ((kpos (list-ref position (- k 1))))
+    (define (safe?-iter p position)
+      (let ((target (car position)))
+	(if (= p k)
+	    #t
+	    (if (or (= target kpos) (= target (- kpos (- k p))) (= target (+ kpos (- k p))))
+		#f
+		(safe?-iter (+ p 1) (cdr position))))))
+    (safe?-iter 1 position)))
+  
+;;ex2-43
+;;queen-colでkを一つ減らす際に毎回k=0までのqueen-colの結果を計算している
+;;T^2/2の時間がかかる
