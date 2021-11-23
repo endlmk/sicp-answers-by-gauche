@@ -460,3 +460,34 @@
 ;;ex2-43
 ;;queen-colでkを一つ減らす際に毎回k=0までのqueen-colの結果を計算している
 ;;それぞれのqueen-colでさらにqueen-colを呼び出すため、T * board-size ^ board-sizeとなる。
+
+;;ex2-44
+(define (right-split painter n)
+  (if (= n 0)
+      painter
+      (let ((smaller (right-split painter (- n 1))))
+	(beside painter (below smaller smaller)))))
+
+(define (corner-split painter n)
+  (if (= n 0)
+      painter
+      (let ((up (up-split painter (- n 1)))
+	    (right (right-split painter (- n 1))))
+	(let ((top-left (beside up up))
+	      (bottom-right (below right right))
+	      (corner (corner-split painter (- n 1))))
+	  (beside (below painter top-left)
+		  (below bottom-right corner))))))
+
+(define (up-split painter n)
+  (if (= n 0)
+      painter
+      (let ((smaller (up-split painter (- n 1))))
+	(below painter (besides smaller smaller)))))
+
+;;ex2-45
+(define (split painter io so n)
+  (if (= n 0)
+      painter
+      (let ((smaller (split io so (- n 1))))
+	(io painter (so smaller smaller)))))
