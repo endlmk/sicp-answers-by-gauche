@@ -667,6 +667,46 @@
 (define (below painter1 painter2)
   (rotate-270 (beside (rotate-90 painter1) (rotate-90 painter2))))
 
+;;ex2-52
+(define wave1
+  (segments->painter
+   (list (make-segment (make-vect 0.35 0.85) (make-vect 0.40 1.00))
+         (make-segment (make-vect 0.65 0.85) (make-vect 0.60 1.00))
+         (make-segment (make-vect 0.35 0.85) (make-vect 0.40 0.65))
+         (make-segment (make-vect 0.65 0.85) (make-vect 0.60 0.65))
+         (make-segment (make-vect 0.60 0.65) (make-vect 0.75 0.65))
+         (make-segment (make-vect 0.40 0.65) (make-vect 0.30 0.65))
+         (make-segment (make-vect 0.75 0.65) (make-vect 1.00 0.35))
+         (make-segment (make-vect 0.60 0.45) (make-vect 1.00 0.15))
+         (make-segment (make-vect 0.60 0.45) (make-vect 0.75 0.00))
+         (make-segment (make-vect 0.50 0.30) (make-vect 0.60 0.00))
+         (make-segment (make-vect 0.30 0.65) (make-vect 0.15 0.60))
+         (make-segment (make-vect 0.30 0.60) (make-vect 0.15 0.40))
+         (make-segment (make-vect 0.15 0.60) (make-vect 0.00 0.85))
+         (make-segment (make-vect 0.15 0.40) (make-vect 0.00 0.65))
+         (make-segment (make-vect 0.30 0.60) (make-vect 0.35 0.50))
+         (make-segment (make-vect 0.35 0.50) (make-vect 0.25 0.00))
+         (make-segment (make-vect 0.50 0.30) (make-vect 0.40 0.00))
+	 (make-segment (make-vect 0.44 0.70) (make-vect 0.51 0.70))))
+
+(define (corner-split1 painter n)
+  (if (= n 0)
+      painter
+      (beside (below painter (up-split painter (- n 1)))
+	      (below (right-split painter (- n 1)) (corner-split painter (- n 1))))))
+
+(define (square-of-four tl tr bl br)
+  (lambda (painter)
+    (let ((top (beside (tl painter) (tr painter)))
+	  (bottom (beside (bl painter) (br painter))))
+      (below bottom top))))
+
+(define (square-limit painter n)
+  (let ((combine4 (square-of-four flip-vert rotate-180
+				  identity flip-holiz)))
+    (combine4 (corner-split painter n))))
+    
+
 
     
 
