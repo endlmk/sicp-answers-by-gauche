@@ -706,11 +706,21 @@
 				  identity flip-holiz)))
     (combine4 (corner-split painter n))))
     
+;;ex2-53
+(list 'a 'b 'c) ;;(a b c)
+(list (list 'george)) ;;((george))
+(cdr '((x1 x2) (y1 y2))) ;;((y1 y2))
+(cadr '((x1 x2) (y1 y2))) ;;(y1 y2)
+(pair? (car '(a short list))) ;;#f
+(memq 'red '((red shoes) (blue shoes))) ;;#f
+(memq 'red '(red shoes blue socks)) ;;(red shoes blue socks
 
+;;ex2-54
+(define (equal? a b)
+  (cond ((eq? a b) #t)
+	(else (and (eq? (car a) (car b)) (equal? (cdr a) (cdr b))))))
 
-    
-
-
-
+;;ex2-55
+(car ''abracadabra) ;; (car '(quote abracadabra)) -> quote
 
 	  
