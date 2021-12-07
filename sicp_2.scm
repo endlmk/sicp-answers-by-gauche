@@ -898,7 +898,7 @@
 	(else (let ((x1 (car set1))
 		    (x2 (car set2)))
 		(cond ((= x1 x2) (cons x1 (union-set (cdr set1) (cdr set2))))
-		      ((< x1 x2) (cons x1 (cons x2 (union-set (cdr set1) (cdr set2)))))
+		      ((< x1 x2) (cons x1 (union-set (cdr set1) set2)))
 		      ((> x1 x2) (cons x2 (cons x1 (union-set (cdr set1) (cdr set2))))))))))
 
 ;;ex2-63
@@ -939,3 +939,53 @@
 ;;(1 3 5 7 9 11)
 
 ;;ツリーの走査のオーダーは同じ。appendの分、1のほうが遅い。
+
+;;ex2-64
+(define (list->tree elements)
+  (car (partial-tree elements (length elements))))
+(define (partial-tree elts n)
+  (if (= n 0)
+      (cons () elts)
+      (let ((left-size (quotient (- n 1) 2)))
+	(let ((left-result (partial-tree elts left-size)))
+	  (let ((left-tree (car left-result))
+		(non-left-elts (cdr left-result))
+		(right-size (- n (+ left-size 1))))
+	    (let ((this-entry (car non-left-elts))
+		  (right-result (partial-tree (cdr non-left-elts) right-size)))
+	      (let ((right-tree (car right-result))
+		    (remaining-elts (cdr right-result)))
+		(cons (make-tree this-entry left-tree right-tree) remaining-elts))))))))
+
+;;(1 3) (5...)
+;;(1 () ()) (3) (5..)
+;;(3 (1 () ()) ()) (5..)
+;;(5 (3 (1 () ()) ()) (9 (7 () ()) (11 () ())))
+;;リストの中央の要素から左と右に分け、それぞれで部分列を作る処理を再帰的に実行する。
+;;要素数分のツリーを作るので要素数のオーダーとなる。
+
+;;ex2-65
+(define (union-set set1 set2)
+  (let ((list1 (tree->list-2 set1))
+	(list2 (tree->list-2 set2)))
+    (define (union-list s1 s2)
+      (cond ((null? s1) s2)
+	    ((null? s2) s1)
+	    (else (let ((x1 (car s1))
+			(x2 (car s2)))
+		    (cond ((= x1 x2) (cons x1 (union-list (cdr s1) (cdr s2))))
+			  ((< x1 x2) (cons x1 (union-list (cdr s1) s2)))
+			  ((> x1 x2) (cons x2 (cons x1 (union-list (cdr s1) (cdr s2))))))))))
+    (list->tree (union-list list1 list2))))
+(define (intersection-set set1 set2)
+  (let ((list1 (tree->list-2 set1))
+	(list2 (tree->list-2 set2)))
+    (define (intersection-list set1 set2)
+      (if (or (null? set1) (null? set2))
+	  ()
+	  (let ((x1 (car set1))
+		(x2 (car set2)))
+	    (cond ((= x1 x2) (cons x1 (intersection-list (cdr set1) (cdr set2))))
+		  ((< x1 x2) (intersection-list (cdr set1) set2))
+		  ((> x1 x2) (intersection-list set1 (cdr set2)))))))
+    (list->tree (intersection-list list1 list2))))
