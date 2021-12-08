@@ -989,3 +989,10 @@
 		  ((< x1 x2) (intersection-list (cdr set1) set2))
 		  ((> x1 x2) (intersection-list set1 (cdr set2)))))))
     (list->tree (intersection-list list1 list2))))
+
+;;ex2-66
+(define (lookup given-key set-of-records)
+  (cond ((null? set-of-records) #f)
+	((= given-key (key (entry set-of-records))) (entry set-of-records))
+	((< given-key (key (entry set-of-records))) (lookup given-key (left-branch set-of-records)))
+	((> given-key (key (entry set-of-records))) (lookup given-key (right-branch set-of-records)))))
