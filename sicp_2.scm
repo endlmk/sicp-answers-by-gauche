@@ -1036,3 +1036,22 @@
 								     (make-leaf 'C 1)))))
 (define sample-message '(0 1 1 0 0 1 0 1 0 1 1 1 0)) 
 ;;ADABBCA
+
+;;ex2-68
+(define (encode message tree)
+  (if (null? message)
+      ()
+      (append (encode-symbol (car message) tree)
+	      (encode (cdr message) tree))))
+(define (encode-symbol symbol tree)
+  (define (encode-symbol1 symbol current result)
+    (if (leaf? current)
+	(if (eq? symbol (symbol-leaf current))
+	    result
+	    #f)
+	(let ((l_result (encode-symbol1 symbol (left-branch current) (append result '(0))))
+	      (r_result (encode-symbol1 symbol (right-branch current) (append result '(1)))))
+	  (cond ((pair? l_result) l_result)
+		((pair? r_result) r_result)
+		(else #f)))))
+  (encode-symbol1 symbol tree ()))
