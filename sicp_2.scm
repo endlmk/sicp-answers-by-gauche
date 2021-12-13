@@ -1072,3 +1072,12 @@
   (if (null? (cdr leafset))
       (car leafset)
       (successive-merge (adjoin-set (make-code-tree (car leafset) (cadr leafset)) (cddr leafset)))))
+
+;;ex2-70
+(define rock-list '((A 2) (GET 2) (SHA 3) (WAH 1) (BOOM 1) (JOB 2) (NA 16) (YIP 9)))
+(define rock-tree (generate-huffman-tree rock-list))
+
+;;GET A JOB -> (1 1 1 1 1 1 1 0 0 1 1 1 1 0) 14, fixed bits 9
+;;SHA NA NA NA NA NA NA NA NA -> (1 1 1 0 0 0 0 0 0 0 0 0) 12, fixed bits 27 
+;;WAH YIP YIP YIP YIP YIP YIP YIP YIP YIP -> (1 1 0 1 1 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0) 23, fixed bits 30
+;;SHA BOOM -> (1 1 1 0 1 1 0 1 0) 9, fixed bits 6
