@@ -1105,3 +1105,29 @@
 ;;ex2-72
 ;;最高頻度->1のオーダー
 ;;最低頻度->n*(n-1)/2のオーダー
+
+;;ex2-73
+;;a
+;;演算子(operator)を選択して、対応する微分演算を演算対象(operands)に適用している
+;;number?, variable?が処理するexpは(operator operands)のペアではない。そのため同じ形式でデータ主導ディスパッチに取り込めない
+;;b
+(define (install-sum-package)
+  (define (deriv-sum operands var)
+    (make-sum (deriv (car operands) var)
+	      (deriv (cadr operands) var)))
+  (put 'deriv '+ deriv-sum))
+(define (install-product-package)
+  (define (deriv-product operands var)
+    (make-sum (make-product (car operands) (deriv (cadr operands) var))
+	      (make-product (deriv (car operands) var) (cadr operands))))
+  (put 'deriv '* deriv-product))
+;;c
+(define (install-exponentiation-package)
+  (define (deriv-exponentiation operands var)
+    (make-product (make-product (cadr operands)
+				(make-exponentiation (car operands) (make-sum (cadr operands) -1)))
+		  (deriv (car operands) var)))
+  (put 'deriv '** deriv-exponentiation))
+;;d
+;;putの第一引数と第二引数を入れ替える必要がある。
+
