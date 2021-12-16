@@ -1131,3 +1131,25 @@
 ;;d
 ;;putの第一引数と第二引数を入れ替える必要がある。
 
+;;ex2-74
+;;a
+(define (get-record name file)
+  ((get 'record (car file)) name (cdr file)))
+;;事業所名をファイルの先頭に付与する
+;;b
+(define (get-sarary record)
+  ((get 'sarary (car record)) (cdr record)))
+;;レコードの先頭に事業所名を付与する
+;;c
+(define (find-employee-record name files)
+  (if (null? files)
+      ()
+      (let ((record (get-record car(file))))
+	(if (null? record)
+	    (find-employee-record (cdr files))
+	    record))))
+;;d
+;;事業所名の入ったファイルとレコードを用意し、各種情報取得用の手続きをテーブルに登録する。
+
+	  
+    
