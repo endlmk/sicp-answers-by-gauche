@@ -1406,3 +1406,47 @@
   (put '=zero? '(complex) (lambda (z) (and (= (real-part z) 0) (= (imag-part z) 0))))
   'done)
 
+;;ex2-81
+(define (apply-generic op . args)
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+	  (apply proc (map contents args))
+	  (if (= (length args) 2)
+	      (let ((type1 (car type-tags))
+		    (type2 (cadr type-tags))
+		    (a1 (car args))
+		    (a2 (cadr args)))
+		(let ((t1->t2 (get-coercion type1 type2))
+		      (t2->t1 (get-coercion type2 type1)))
+		  (cond (t1->t2 (apply-generic op (t1->t2 a1) a2))
+			(t2->t1 (apply-generic op a1 (t2->t1 a2)))
+			(else (error "No method for these types" (list op type-tags))))))
+	      (error (error "No method for these types" (list op type-tags))))))))
+
+;; (t1->t2 (apply-generic op (t1->t2 a1) a2))が呼び出されるが、やはりcomplex型に対するexpは定義されていないので実行時エラーとなる。
+;;同じ型同士の演算が定義されていないのであれば、その時点でエラーとなるべきなので、同じ型に対する強制型変換は不要である。
+(define (apply-generic op . args)
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+	  (apply proc (map contents args))
+	  (if (= (length args) 2)
+	      (let ((type1 (car type-tags))
+		    (type2 (cadr type-tags))
+		    (a1 (car args))
+		    (a2 (cadr args)))
+		(if (eq? type1 type2)
+		    (error (error "No method for these types" (list op type-tags)))
+		    (let ((t1->t2 (get-coercion type1 type2))
+			  (t2->t1 (get-coercion type2 type1)))
+		      (cond (t1->t2 (apply-generic op (t1->t2 a1) a2))
+			    (t2->t1 (apply-generic op a1 (t2->t1 a2)))
+			    (else (error "No method for these types" (list op type-tags)))))))
+	      (error (error "No method for these types" (list op type-tags))))))))
+
+		  
+		      
+	      
+		    
+			
