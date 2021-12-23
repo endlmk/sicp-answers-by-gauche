@@ -1422,7 +1422,7 @@
 		  (cond (t1->t2 (apply-generic op (t1->t2 a1) a2))
 			(t2->t1 (apply-generic op a1 (t2->t1 a2)))
 			(else (error "No method for these types" (list op type-tags))))))
-	      (error (error "No method for these types" (list op type-tags))))))))
+	      (error "No method for these types" (list op type-tags)))))))
 
 ;; (t1->t2 (apply-generic op (t1->t2 a1) a2))が呼び出されるが、やはりcomplex型に対するexpは定義されていないので実行時エラーとなる。
 ;;同じ型同士の演算が定義されていないのであれば、その時点でエラーとなるべきなので、同じ型に対する強制型変換は不要である。
@@ -1437,13 +1437,38 @@
 		    (a1 (car args))
 		    (a2 (cadr args)))
 		(if (eq? type1 type2)
-		    (error (error "No method for these types" (list op type-tags)))
+		    (error "No method for these types" (list op type-tags))
 		    (let ((t1->t2 (get-coercion type1 type2))
 			  (t2->t1 (get-coercion type2 type1)))
 		      (cond (t1->t2 (apply-generic op (t1->t2 a1) a2))
 			    (t2->t1 (apply-generic op a1 (t2->t1 a2)))
 			    (else (error "No method for these types" (list op type-tags)))))))
-	      (error (error "No method for these types" (list op type-tags))))))))
+	      (error "No method for these types" (list op type-tags)))))))
+
+;;ex2-82
+(define (apply-generic op . args)
+  (define (type-coercion t args)
+    (if (null? args)
+	()
+	(let ((proc (get-coercion t (type-tag (car args)))))
+	  (if proc
+	      (cons (proc (car args)) (type-coercione t (cdr args)))
+	      #f))))
+  (define (apply-coercion tryargs args)
+    (if (null? tryargs)
+	()
+	(let ((result (type-coercion (type-tag (car tryargs)) args)))
+	  (if result
+	      result
+	      (apply-coercion (cdr tryargs) args)))))
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+	  (apply proc (map contents args))
+	  (let ((type-coerced (apply-coercion args args)))
+	    (if (not (null? type-coerced))
+		(apply-generic op type-coerced)
+		(error "No method for these types" (list op type-tags))))))))
 
 		  
 		      
