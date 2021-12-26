@@ -1531,4 +1531,40 @@
 
 (define (make-real x) ((get 'make 'real-number) x))
 		    
-			
+;;ex2-84
+(define (comp-ord t1 t2 tower)
+  (define (ord t tower)
+    (if (null? tower)
+	-1
+	(if (eq? t (car tower))
+	    0
+	    (+ 1 (ord t (cdr tower))))))
+  (let ((o1 (ord t1 tower))
+	(o2 (ord t2 tower)))
+    (if (or (= -1 o1) (= -1 o2))
+	#f
+	(- o1 o2))))
+
+(define tower '(complex real-number rational scheme-number))
+(define (apply-generic op . args)
+  (define (raise-to a rep)
+    (if (= rep 0)
+	a
+	(raise-to (raise a) (- rep 1))))
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+	  (apply proc (map contents args))
+	  (if (= (length args) 2)
+	      (let ((type1 (car type-tags))
+		    (type2 (cadr type-tags))
+		    (a1 (car args))
+		    (a2 (cadr args)))
+		(let ((comp (comp-ord type1 type2 tower)))
+		  (if (eq? comp #f)
+		      (error "No method for these types1" (list op type-tags))
+		      (if (> comp 0)
+			  (apply-generic op (raise-to a1 comp) a2)
+			  (apply-generic op a1 (raise-to a2 (abs comp)))))))
+	      (error "No method for these types" (list op type-tags)))))))
+
