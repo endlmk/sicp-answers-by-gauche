@@ -1828,6 +1828,7 @@
   'done)
 
 ;;ex2-87
+;;ex2-88
 (define *op-table* (make-hash-table 'equal?))
 (define (put op type proc)
   (hash-table-put! *op-table* (list op type) proc))
@@ -1858,6 +1859,7 @@
 (define (mul x y) (apply-generic 'mul x y))
 (define (div x y) (apply-generic 'div x y))
 (define (=zero? x) (apply-generic '=zero? x))
+(define (negate x) (apply-generic 'negate x))
 
 (define (install-scheme-number-package)
   (define (tag x) (attach-tag 'scheme-number x))
@@ -1867,6 +1869,7 @@
   (put 'div '(scheme-number scheme-number) (lambda (x y) (tag (/ x y))))
   (put 'make 'scheme-number (lambda (x) (tag x)))
   (put '=zero? '(scheme-number) (lambda (x) (= x 0)))
+  (put 'negate '(scheme-number) (lambda (x) (* x -1)))
   'done)
 (define (make-scheme-number n)
   ((get 'make 'scheme-number) n))
@@ -1917,12 +1920,18 @@
   (define (coeff term) (cadr term))
   (define (zero-term? term) (=zero? (coeff term)))
   (define (zero-termlist? term-list) (and (zero-term? (first-term term-list)) (zero-termlist? (rest-terms term-list))))
+  (define (sub-poly p1 p2) (add-poly p1 (negate-poly p2)))
+  (define (negate-poly p) (make-poly (variable p) (negate-terms (term-list p))))
+  (define (negate-terms L) (map negate-term L))
+  (define (negate-term t) (make-term (order t) (negate (coeff t))))
 
   (define (tag p) (attach-tag 'polynomial p))
   (put 'add '(polynomial polynomial) (lambda (p1 p2) (tag (add-poly p1 p2))))
   (put 'mul '(polynomial polynomial) (lambda (p1 p2) (tag (mul-poly p1 p2))))
   (put 'make 'polynomial (lambda (var terms) (tag (make-poly var terms))))
   (put '=zero? '(polynomial) (lambda (p) (or (empty-termlist? (term-list p)) (zero-termlist? (term-list p)))))
+  (put 'sub '(polynomial polynomial) (lambda (p1 p2) (tag (sub-poly p1 p2))))
+  (put 'negate '(polynomial) (lambda (p) (tag (negate-poly p)))) 
   'done)
 
 (define (make-ploynomial var terms) ((get 'make 'polynomial) var terms))
