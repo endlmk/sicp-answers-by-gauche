@@ -1935,3 +1935,13 @@
   'done)
 
 (define (make-ploynomial var terms) ((get 'make 'polynomial) var terms))
+
+;;ex2-89
+(define (first-term term-list) (list (car term-list) (- (length term-list) 1)))
+(define (adjoin-term term term-list)
+  (let ((coeff-term (coeff term))
+	(order-term (order term))
+	(order-terms (- (length term-list) 1)))
+    (cond ((= order-term order-terms) (cons coeff-term (cdr term-list)))
+	  ((< order-term order-terms) (cons (car term-list) (adjoin-term term (cdr term-list))))
+	  (else (cons coeff-term (adjoin-term (make-term (- order-term 1) 0) term-list))))))
