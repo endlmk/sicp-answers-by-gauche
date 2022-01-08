@@ -1945,3 +1945,11 @@
     (cond ((= order-term order-terms) (cons coeff-term (cdr term-list)))
 	  ((< order-term order-terms) (cons (car term-list) (adjoin-term term (cdr term-list))))
 	  (else (cons coeff-term (adjoin-term (make-term (- order-term 1) 0) term-list))))))
+
+;;ex2-90
+;;パス
+;;term-listを扱う演算をすべてジェネリックにする。加えて異なる型同士の処理に対応できるようにする必要がある。
+
+
+
+  
