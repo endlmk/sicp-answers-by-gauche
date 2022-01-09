@@ -1829,6 +1829,7 @@
 
 ;;ex2-87
 ;;ex2-88
+;;ex2-91
 (define *op-table* (make-hash-table 'equal?))
 (define (put op type proc)
   (hash-table-put! *op-table* (list op type) proc))
@@ -1907,6 +1908,23 @@
 	(the-empty-termlist)
 	(let ((t2 (first-term L)))
 	  (adjoin-term (make-term (+ (order t1) (order t2)) (mul (coeff t1) (coeff t2))) (mul-term-by-all-terms t1 (rest-terms L))))))
+  (define (div-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+	(map (lambda (term-list) (make-poly (variable p1) term-list)) (div-terms (term-list p1) (term-list p2)))
+	(error "Polys not in same var: DIV-POLY" (list p1 p2))))
+  (define (div-terms L1 L2)
+    (if (empty-termlist? L1)
+	(list (the-empty-termlist) (the-empty-termlist))
+	(let ((t1 (first-term L1))
+	      (t2 (first-term L2)))
+	  (if (> (order t2) (order t1))
+	      (list (the-empty-termlist) L1)
+	      (let ((new-c (div (coeff t1) (coeff t2)))
+		    (new-o (- (order t1) (order t2))))
+		(let ((rest-of-result
+		       (add-terms L1 (negate-terms (mul-term-by-all-terms (make-term new-o new-c) L2)))))
+		  (let ((div-ans (div-terms rest-of-result L2)))
+		    (cons (adjoin-term (make-term new-o new-c) (car div-ans)) (cdr div-ans)))))))))
   (define (adjoin-term term term-list)
     (if (=zero? (coeff term))
 	term-list
@@ -1931,7 +1949,8 @@
   (put 'make 'polynomial (lambda (var terms) (tag (make-poly var terms))))
   (put '=zero? '(polynomial) (lambda (p) (or (empty-termlist? (term-list p)) (zero-termlist? (term-list p)))))
   (put 'sub '(polynomial polynomial) (lambda (p1 p2) (tag (sub-poly p1 p2))))
-  (put 'negate '(polynomial) (lambda (p) (tag (negate-poly p)))) 
+  (put 'negate '(polynomial) (lambda (p) (tag (negate-poly p))))
+  (put 'div '(polynomial polynomial) (lambda (p1 p2) (tag (div-poly p1 p2))))
   'done)
 
 (define (make-ploynomial var terms) ((get 'make 'polynomial) var terms))
