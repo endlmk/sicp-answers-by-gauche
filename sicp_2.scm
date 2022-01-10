@@ -1830,6 +1830,7 @@
 ;;ex2-87
 ;;ex2-88
 ;;ex2-91
+;;ex2-94
 (define *op-table* (make-hash-table 'equal?))
 (define (put op type proc)
   (hash-table-put! *op-table* (list op type) proc))
@@ -1925,6 +1926,18 @@
 		       (add-terms L1 (negate-terms (mul-term-by-all-terms (make-term new-o new-c) L2)))))
 		  (let ((div-ans (div-terms rest-of-result L2)))
 		    (cons (adjoin-term (make-term new-o new-c) (car div-ans)) (cdr div-ans)))))))))
+  (define (gcd-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+	(make-poly (variable p1) (gcd-terms (term-list p1) (term-list p2)))
+	(error "Polys not in same var: GCD-POLY" (list p1 p2))))
+  (define (gcd-terms a b)
+    (print a)
+    (print b)
+    (if (empty-termlist? b)
+	a
+	(gcd-terms b (remainder-terms a b))))
+  (define (remainder-terms a b)
+    (cadr (div-terms a b)))
   (define (adjoin-term term term-list)
     (if (=zero? (coeff term))
 	term-list
@@ -1951,9 +1964,12 @@
   (put 'sub '(polynomial polynomial) (lambda (p1 p2) (tag (sub-poly p1 p2))))
   (put 'negate '(polynomial) (lambda (p) (tag (negate-poly p))))
   (put 'div '(polynomial polynomial) (lambda (p1 p2) (tag (div-poly p1 p2))))
+  (put 'greatest-common-divisor '(polynomial polynomial) (lambda (p1 p2) (tag (gcd-poly p1 p2))))
   'done)
 
-(define (make-ploynomial var terms) ((get 'make 'polynomial) var terms))
+(define (make-polynomial var terms) ((get 'make 'polynomial) var terms))
+
+(define (greatest-common-divisor a b) (apply-generic 'greatest-common-divisor a b))
 
 ;;ex2-89
 (define (first-term term-list) (list (car term-list) (- (length term-list) 1)))
@@ -1969,6 +1985,45 @@
 ;;パス
 ;;term-listを扱う演算をすべてジェネリックにする。加えて異なる型同士の処理に対応できるようにする必要がある。
 
+;;ex2-92
+;;パス
 
+;;ex2-93
+(define (install-rational-package)
+  (define (numer x) (car x))
+  (define (denom x) (cdr x))
+  (define (make-rat n d)
+    (cons n d))
+  (define (add-rat x y)
+    (make-rat (add (mul (numer x) (denom y))
+		   (mul (numer y) (denom x)))
+	      (mul (denom x) (denom y))))
+  (define (sub-rat x y)
+    (make-rat (sub (mul (numer x) (denom y))
+		   (mul (numer y) (denom x)))
+	      (mul (denom x) (denom y))))
+  (define (mul-rat x y)
+    (make-rat (mul (numer x) (numer y))
+	      (mul (denom x) (denom y))))
+  (define (div-rat x y)
+    (make-rat (mul (numer x) (denom y))
+	      (mul (denom x) (numer y))))
+  (define (tag x) (attach-tag 'rational x))
+  (put 'add '(rational rational) (lambda (x y) (tag (add-rat x y))))
+  (put 'sub '(rational rational) (lambda (x y) (tag (sub-rat x y))))
+  (put 'mul '(rational rational) (lambda (x y) (tag (mul-rat x y))))
+  (put 'div '(rational rational) (lambda (x y) (tag (div-rat x y))))
+  (put 'equ? '(rational rational) (lambda (x y) (= (* (numer x) (denom y)) (* (numer y) (denom x)))))
+  (put '=zero? '(rational) (lambda (x) (= (numer x) 0)))
+  (put 'make 'rational (lambda (n d) (tag (make-rat n d))))
+  'done)
+(define (make-rational n d)
+  ((get 'make 'rational) n d))
 
-  
+;;ex2-95
+(define p1 (make-polynomial 'x '((2 1) (1 -2) (0 1))))
+(define p2 (make-polynomial 'x '((2 11) (0 7))))
+(define p3 (make-polynomial 'x '((1 13) (0 5))))
+(define q1 (mul p1 p2))
+(define q2 (mul p1 p3))
+(greatest-common-divisor q1 q2)
