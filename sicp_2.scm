@@ -1831,6 +1831,8 @@
 ;;ex2-88
 ;;ex2-91
 ;;ex2-94
+;;ex2-96
+;;ex2-97
 (define *op-table* (make-hash-table 'equal?))
 (define (put op type proc)
   (hash-table-put! *op-table* (list op type) proc))
@@ -1864,6 +1866,9 @@
 (define (negate x) (apply-generic 'negate x))
 
 (define (install-scheme-number-package)
+  (define (reduce-integers n d)
+    (let ((g (gcd n d)))
+      (list (/ n g) (/ d g))))
   (define (tag x) (attach-tag 'scheme-number x))
   (put 'add '(scheme-number scheme-number) (lambda (x y) (tag (+ x y))))
   (put 'sub '(scheme-number scheme-number) (lambda (x y) (tag (- x y))))
@@ -1872,6 +1877,7 @@
   (put 'make 'scheme-number (lambda (x) (tag x)))
   (put '=zero? '(scheme-number) (lambda (x) (= x 0)))
   (put 'negate '(scheme-number) (lambda (x) (* x -1)))
+  (put 'reduce '(scheme-number scheme-number) (lambda (x y) (map tag (reduce-integers x y))))
   'done)
 (define (make-scheme-number n)
   ((get 'make 'scheme-number) n))
@@ -1930,14 +1936,37 @@
     (if (same-variable? (variable p1) (variable p2))
 	(make-poly (variable p1) (gcd-terms (term-list p1) (term-list p2)))
 	(error "Polys not in same var: GCD-POLY" (list p1 p2))))
+  ;; for ex2.94, ex2.95
+  ;;  (define (gcd-terms a b)
+  ;;    (print a)
+  ;;    (print b)
+  ;;    (if (empty-termlist? b)
+  ;;	a
+  ;;	(gcd-terms b (remainder-terms a b))))
+  ;; for ex2.96
   (define (gcd-terms a b)
-    (print a)
-    (print b)
     (if (empty-termlist? b)
-	a
-	(gcd-terms b (remainder-terms a b))))
+	(let ((coeffs (map coeff a)))
+	  (let ((gcd-coeffs (apply gcd coeffs)))
+	    (map (lambda (term) (make-term (order term) (/ (coeff term) gcd-coeffs))) a))) 
+	(gcd-terms b (pseudoremainder-terms a b))))
   (define (remainder-terms a b)
     (cadr (div-terms a b)))
+  (define (pseudoremainder-terms a b)
+    (let ((integerizing-factor (expt (coeff (first-term b)) (+ 1 (- (order (first-term a)) (order (first-term b)))))))
+      (cadr (div-terms (mul-term-by-all-terms (make-term 0 integerizing-factor) a) b))))
+  (define (reduce-poly p1 p2)
+    (if (same-variable? (variable p1) (variable p2))
+	(map (lambda (term-list) (make-poly (variable p1) term-list)) (reduce-terms (term-list p1) (term-list p2)))
+	(error "Polys not in same var: REDUCE-POLY" (list p1 p2))))
+  (define (reduce-terms n d)
+    (let ((gcd-of-n-d (gcd-terms n d)))
+      (let ((c (coeff (first-term gcd-of-n-d)))
+	    (o1 (max (order (first-term n)) (order (first-term d))))
+	    (o2 (order (first-term gcd-of-n-d))))
+	(let ((integerizing-factor (expt c (+ 1 (- o1 o2)))))
+	  (list (car (div-terms (mul-term-by-all-terms (make-term 0 integerizing-factor) n) gcd-of-n-d))
+		(car (div-terms (mul-term-by-all-terms (make-term 0 integerizing-factor) d) gcd-of-n-d)))))))  
   (define (adjoin-term term term-list)
     (if (=zero? (coeff term))
 	term-list
@@ -1963,13 +1992,16 @@
   (put '=zero? '(polynomial) (lambda (p) (or (empty-termlist? (term-list p)) (zero-termlist? (term-list p)))))
   (put 'sub '(polynomial polynomial) (lambda (p1 p2) (tag (sub-poly p1 p2))))
   (put 'negate '(polynomial) (lambda (p) (tag (negate-poly p))))
-  (put 'div '(polynomial polynomial) (lambda (p1 p2) (tag (div-poly p1 p2))))
+  (put 'div '(polynomial polynomial) (lambda (p1 p2) (map tag (div-poly p1 p2))))
   (put 'greatest-common-divisor '(polynomial polynomial) (lambda (p1 p2) (tag (gcd-poly p1 p2))))
+  (put 'reduce '(polynomial polynomial) (lambda (p1 p2) (map tag (reduce-poly p1 p2))))
   'done)
 
 (define (make-polynomial var terms) ((get 'make 'polynomial) var terms))
 
 (define (greatest-common-divisor a b) (apply-generic 'greatest-common-divisor a b))
+
+(define (reduce a b) (apply-generic 'reduce a b))
 
 ;;ex2-89
 (define (first-term term-list) (list (car term-list) (- (length term-list) 1)))
@@ -1989,11 +2021,16 @@
 ;;パス
 
 ;;ex2-93
+;;ex2-97
 (define (install-rational-package)
   (define (numer x) (car x))
   (define (denom x) (cdr x))
   (define (make-rat n d)
-    (cons n d))
+    ;;for ex2.93
+    ;;(cons n d))
+    ;;for ex2.97
+    (let ((n-d-list (reduce n d)))
+      (cons (car n-d-list) (cadr n-d-list))))
   (define (add-rat x y)
     (make-rat (add (mul (numer x) (denom y))
 		   (mul (numer y) (denom x)))
@@ -2027,3 +2064,12 @@
 (define q1 (mul p1 p2))
 (define q2 (mul p1 p3))
 (greatest-common-divisor q1 q2)
+
+;;ex2-97
+(define p1 (make-polynomial 'x '((1 1) (0 1))))
+(define p2 (make-polynomial 'x '((3 1) (0 -1))))
+(define p3 (make-polynomial 'x '((1 1))))
+(define p4 (make-polynomial 'x '((2 1) (0 -1))))
+(define rf1 (make-rational p1 p2))
+(define rf2 (make-rational p3 p4))
+(add rf1 rf2)
