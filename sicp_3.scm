@@ -35,3 +35,27 @@
 		     (constantly "Call the Cop")
 		     (constantly "Incorrect password")))))
     dispatch))
+;;ex3.5
+(define (estimate-integral p x1 x2 y1 y2 trials)
+  (define (test-p p x1 x2 y1 y2)
+    (lambda () (p (random-in-range x1 x2) (random-in-range y1 y2))))
+  (let ((rectarea (* (- x2 x1) (- y2 y1))))
+    (* rectarea (monte-carlo trials (test-p p x1 x2 y1 y2)))))
+(define (random-in-range low high)
+  (use srfi-27)
+  (let ((range (- high low)))
+    (+ low (* (random-real) range))))
+(define (monte-carlo trials experiment)
+  (define (iter trials-remaining trials-passed)
+    (cond ((= trials-remaining 0) (/ trials-passed  trials))
+	  ((experiment) (iter (- trials-remaining 1) (+ trials-passed 1)))
+	  (else (iter (- trials-remaining 1) trials-passed))))
+  (iter trials 0))
+
+(define (circle-p x y)
+  (<= (+ (square (- x 5)) (square (- y 7))) (square 3)))
+;;estimate pi
+(/ (estimate-integral circle-p 2 8 4 10 1000) (* (square 3) 1.0))
+
+    
+  
