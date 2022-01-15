@@ -14,6 +14,7 @@
     dispatch))
 ;;ex3.3
 ;;ex3.4
+;;ex3.7
 (define (make-account balance password)
   (let ((wrong-count 0))
     (define (withdraw amount)
@@ -25,16 +26,28 @@
       (set! balance (+ balance amount))
       balance)
     (define (dispatch p m)
-      (if (eq? p password)
-	  (begin (set! wrong-count 0)
-		 (cond ((eq? m 'withdraw) withdraw)
-		       ((eq? m 'deposite) deposite)
-		       (else (error "Unknown request: MAKE-ACCOUNT" m))))
-	  (begin (set! wrong-count (+ wrong-count 1))
-		 (if (>= wrong-count 7)
-		     (constantly "Call the Cop")
-		     (constantly "Incorrect password")))))
+      (if (eq? m 'check-pass)
+	  (eq? p password)
+	  (if (eq? p password)
+	      (begin (set! wrong-count 0)
+		     (cond ((eq? m 'withdraw) withdraw)
+			   ((eq? m 'deposite) deposite)
+			   (else (error "Unknown request: MAKE-ACCOUNT" m))))
+	      (begin (set! wrong-count (+ wrong-count 1))
+		     (if (>= wrong-count 7)
+			 (constantly "Call the Cop")
+			 (constantly "Incorrect password"))))))
     dispatch))
+
+(define (make-joint account pass new-pass)
+  (define (dispatch p m)
+    (if (eq? p new-pass)
+	(account pass m)
+	(constantly "Incorrect password")))
+  (if (account pass 'check-pass)
+      dispatch
+      (error "Incorrect password")))
+
 ;;ex3.5
 (define (estimate-integral p x1 x2 y1 y2 trials)
   (define (test-p p x1 x2 y1 y2)
@@ -57,5 +70,22 @@
 ;;estimate pi
 (/ (estimate-integral circle-p 2 8 4 10 1000) (* (square 3) 1.0))
 
-    
-  
+;;ex3.6
+(define random-init 0)
+;;for test
+(define (rand-update x)
+  (+ x 1))
+(define rand
+  (let ((x random-init))
+    (lambda (m)
+      (cond ((eq? m 'generate) (set! x (rand-update x)) x)
+	    ((eq? m 'reset) (lambda (s) (set! x s)))
+	    (else error "Unknown message.")))))
+	 
+;;ex3.8
+(define f 
+  (let ((s 0))
+    (lambda (x)
+      (if (= x s)
+	(begin (set! s 1) 0)
+	(begin (set! s 0) 1)))))
