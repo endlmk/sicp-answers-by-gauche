@@ -89,3 +89,38 @@
       (if (= x s)
 	(begin (set! s 1) 0)
 	(begin (set! s 0) 1)))))
+
+;;ex3.9
+;;recursive
+;;global-env -> [factorial]
+;;               |
+;;factorial E1->[n:6]
+;;               |
+;;factorial E2->[n:5]
+;;               |
+;;factorial E3->[n:4]
+;;               |
+;;factorial E4->[n:3]
+;;               |
+;;factorial E5->[n:2]
+;;               |
+;;factorial E6->[n:1]
+
+;;iterative
+;;gloval-env -> [factorial fact-iter]
+;;               |
+;;factorial E1->[n:6]
+;;               |
+;;fact-iter E2->[product:1 counter:1 max-count:6]
+;;               |
+;;fact-iter E3->[product:1 counter:2 max-count:6]
+;;               |
+;;fact-iter E4->[product:2 counter:3 max-count:6]
+;;               |
+;;fact-iter E5->[product:6 counter:4 max-count:6]
+;;               |
+;;fact-iter E6->[product:24 counter:5 max-count:6]
+;;               |
+;;fact-iter E7->[product:120 counter:6 max-count:6]
+;;               |
+;;fact-iter E8->[product:720 counter:7 max-count:6]
