@@ -124,3 +124,68 @@
 ;;fact-iter E7->[product:120 counter:6 max-count:6]
 ;;               |
 ;;fact-iter E8->[product:720 counter:7 max-count:6]
+
+;;ex3.10
+;;(define W1 (make-withdrawal 100))
+;;global-env->[make-withdrawal:... W1:...         ]
+;;                                  |           |
+;;                                  (body, E1->[initial-amount:100])
+;;                                    |          |
+;;                                   (body, E2->[balance:100])
+;;global-env->[make-withdrawal:... W1:...         ]
+;;                                  |           |
+;;                                 (body, E2->[balance:100])
+;;(W1 50)
+;;global-env->[make-withdrawal:... W1:...         ]
+;;                                  |          |
+;;                                 (body, E2->[balance:100])
+;;                                             |
+;;                                        E3->[amount:50])
+;;global-env->[make-withdrawal:... W1:...         ]
+;;                                  |          |
+;;                                 (body, E2->[balance:50])
+;;(define W2 (make-withdrawal 100))
+;;global-env->[make-withdrawal:... W2:...         ]
+;;                                  |           |
+;;                                  (body, E4->[initial-amount:100])
+;;                                    |          |
+;;                                   (body, E5->[balance:100])
+;;global-env->[make-withdrawal:... W2:...         ]
+;;                                  |          |
+;;                                 (body, E5->[balance:100])
+
+;;ex3.11
+;;(define acc (make-account 50))
+;;global-env->[make-account:... acc:...                   ]
+;;                               |                      |
+;;                               (body(dispatch),E1)->[balance:50 withdraw:... deposite:... dispatch:...]
+;;((acc 'deposite) 40)
+;;global-env->[make-account:... acc:...                    ]
+;;                               |                      |
+;;                               (body(dispatch),E1)->[balance:50 withdraw:... deposite:... dispatch:...]
+;;                                |
+;;                          E2-> [m:'deposite]
+;;global-env->[make-account:... acc:...]
+;;                               |
+;;                               (body(dispatch),E1)->[balance:50 withdraw:... deposite:... dispatch:...]
+;;                                |
+;;                               (body(deposite),E3)->[amount:40]
+;;global-env->[make-account:... acc:...]
+;;                               |
+;;                               (body(dispatch),E1)->[balance:90 withdraw:... deposite:... dispatch:...]
+;;((acc 'withdraw) 40)
+;;global-env->[make-account:... acc:...]
+;;                               |
+;;                               (body(dispatch),E1)->[balance:50 withdraw:... deposite:... dispatch:...]
+;;                                |
+;;                           E4->[m:'withdraw]
+;;global-env->[make-account:... acc:...]
+;;                               |
+;;                               (body(dispatch),E1)->[balance:50 withdraw:... deposite:... dispatch:...]
+;;                                |
+;;                               (body(deposite),E5)->[amount:60]
+;;global-env->[make-account:... acc:...]
+;;                               |
+;;                               (body(dispatch),E1)->[balance:30 withdraw:... deposite:... dispatch:...]
+;;accとacc2はそれぞれの束縛が別々の環境を指すことにより、別の局所状態を持つことになる。
+;;共有される部分はない
