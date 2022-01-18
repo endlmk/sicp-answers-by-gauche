@@ -189,3 +189,68 @@
 ;;                               (body(dispatch),E1)->[balance:30 withdraw:... deposite:... dispatch:...]
 ;;accとacc2はそれぞれの束縛が別々の環境を指すことにより、別の局所状態を持つことになる。
 ;;共有される部分はない
+
+;;ex3.12
+(define (append x y)
+  (if (null? x)
+      y
+      (cons (car x) (append (cdr x) y))))
+(define (append! x y)
+  (set-cdr! (last-pair x) y))
+(define (last-pair x)
+  (if (null? (cdr x))
+      x
+      (last-pair (cdr x))))
+(define x (list 'a 'b))
+(define y (list 'c 'd))
+(define z (append x y))
+(cdr x) ;;(b)
+;;x->[・|・]->[・|・]->[・|/]
+;;    |      |
+;;    a      b
+(define w (append! x y))
+(cdr x) ;;(b c d
+;;x->[・|・]->[・|・]->[・|・]->[・|・]->[・|/]
+;;    |      |     |      |
+;;    a      b     c      d
+
+;;ex3.13
+(define (make-cycle x)
+  (set-cdr! (last-pair x) x)
+  x)
+(define z (make-cycle (list 'a 'b 'c)))
+(last-pair z) ;;無限ループする
+;;    |-----------------
+;;x->[・|・]->[・|・]->[・|・]」
+;;    |      |     |     
+;;    a      b     c     
+
+;;ex3.14
+(define (mystery x)
+  (define (loop x y)
+    (if (null? x)
+	y
+	(let ((temp (cdr x)))
+	  (set-cdr! x y)
+	  (loop temp x))))
+  (loop x '()))
+(define v (list 'a 'b 'c 'd))
+;;v->[・|・]->[・|・]->[・|・]->[・|・]->[・|/]
+;;    |      |     |      |
+;;    a      b     c      d
+(define w (mystery v)) ;;(d c b a)
+;;x->[・|・]->[・|・]->[・|・]->[・|・]->[・|/] y->[・|/]
+;;    |      |     |      |
+;;    a      b     c      d
+;;x->[・|・]->[・|/] temp->[・|・]->[・|・]->[・|・]->[・|/]
+;;    |                  |     |      |
+;;    a                  b     c      d
+;;x->[・|・]->[・|・]->[・|/] temp->[・|・]->[・|・]->[・|/]
+;;    |      |                 |      |    
+;;    b      a                 c      d
+;;x->[・|・]->[・|・]->[・|・]->[・|/] temp->[・|・]->[・|/]
+;;    |      |     |                  |
+;;    a      b     c                  d
+;;w->[・|・]->[・|・]->[・|・]->[・|・]->[・|/]
+;;    |      |     |      |
+;;    d      c     b      a
