@@ -205,12 +205,12 @@
 (define y (list 'c 'd))
 (define z (append x y))
 (cdr x) ;;(b)
-;;x->[・|・]->[・|・]->[・|/]
+;;x->[・|・]->[・|/]
 ;;    |      |
 ;;    a      b
 (define w (append! x y))
 (cdr x) ;;(b c d
-;;x->[・|・]->[・|・]->[・|・]->[・|・]->[・|/]
+;;x->[・|・]->[・|・]->[・|・]->[・|/]
 ;;    |      |     |      |
 ;;    a      b     c      d
 
@@ -235,22 +235,115 @@
 	  (loop temp x))))
   (loop x '()))
 (define v (list 'a 'b 'c 'd))
-;;v->[・|・]->[・|・]->[・|・]->[・|・]->[・|/]
+;;v->[・|・]->[・|・]->[・|・]->[・|/]
 ;;    |      |     |      |
 ;;    a      b     c      d
 (define w (mystery v)) ;;(d c b a)
-;;x->[・|・]->[・|・]->[・|・]->[・|・]->[・|/] y->[・|/]
+;;x->[・|・]->[・|・]->[・|・]->[・|/] y->[・|/]
 ;;    |      |     |      |
 ;;    a      b     c      d
-;;x->[・|・]->[・|/] temp->[・|・]->[・|・]->[・|・]->[・|/]
-;;    |                  |     |      |
-;;    a                  b     c      d
-;;x->[・|・]->[・|・]->[・|/] temp->[・|・]->[・|・]->[・|/]
-;;    |      |                 |      |    
-;;    b      a                 c      d
-;;x->[・|・]->[・|・]->[・|・]->[・|/] temp->[・|・]->[・|/]
-;;    |      |     |                  |
-;;    a      b     c                  d
-;;w->[・|・]->[・|・]->[・|・]->[・|・]->[・|/]
+;;x->[・|/] temp->[・|・]->[・|・]->[・|/]
+;;    |           |     |      |
+;;    a           b     c      d
+;;x->[・|・]->[・|/] temp->[・|・]->[・|/]
+;;    |      |          |      |    
+;;    b      a          c      d
+;;x->[・|・]->[・|・]->[・|/] temp->[・|/]
+;;    |      |     |           |
+;;    c      b     a           d
+;;w->[・|・]->[・|・]->[・|・]->[・|/]
 ;;    |      |     |      |
 ;;    d      c     b      a
+
+;;ex3.15
+(define x (list 'a 'b))
+(define z1 (cons x x))
+(define z2 (cons (list 'a 'b) (list 'a 'b)))
+(define (set-to-wow! x) (set-car! (car x) 'wow) x)
+;;z1->[・|・]
+;;     | |
+;; x->[・|・]->[・|/]
+;;     |      |
+;;     a      b
+(set-to-wow! z1) ;;((wow b) wow b)
+;;z1->[・|・]
+;;     | |
+;; x->[・|・]->[・|/]
+;;     |      |
+;;     wow    b
+
+;;z2->[・|・]
+;;     |  \
+;;    [・|・][・|・]
+;;     | |  | |
+;;     a b  a b
+(set-to-wow! z2) ;;((wow b) a b)
+;;z2->[・|・]
+;;     |  \
+;;    [・|・][・|・]
+;;     | |  | |
+;;    wow b  a b
+
+;;ex3.16
+(define (count-pairs x)
+  (if (not (pair? x))
+      0
+      (+ (count-pairs (car x))
+	 (count-pairs (cdr x))
+	 1)))
+(define a (cons 0 1))
+(define b (cons 2 3))
+;;3
+(cons a b)
+;;  [・|・]
+;;   |   \
+;;  [・|・] [・|・]
+;;   | |   | |
+;;   0 1   2 3
+;;4
+(set-car! b a)
+(cons a b)
+;;  [・|・]
+;; /  /
+;; |[・|・]
+;; \ |  \
+;;  [・|・] 3
+;;   | |
+;;   1 2
+;;7
+(set-car! b a)
+(set-cdr! b a)
+(cons b b)
+;;  [・|・]
+;;   |/
+;;  [・|・]
+;;   |/  
+;;  [・|・] 
+;;   | |
+;;   1 2
+;;infinite
+;;  |--------------|
+;; [・|・]->[・|・]->[・|・]
+;;  |     |      |
+;;  1     2      3
+
+;;ex3.17
+(define (count-pairs1 x)
+  (define (is-already-counted c e)
+    (if (null? c)
+	#f
+	(if (eq? (car c) e)
+	    #t
+	    (is-already-counted (cdr c) e))))
+  (define counted ())
+  (define (count-helper x)
+    (if (not (pair? x))
+	0
+	(if (is-already-counted counted x)
+	    0
+	    (begin (set! counted (cons x counted))
+	     	   (+ (count-helper (car x))
+		      (count-helper (cdr x))
+		      1)))))
+  (count-helper x))
+    
