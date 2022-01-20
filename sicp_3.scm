@@ -329,21 +329,56 @@
 
 ;;ex3.17
 (define (count-pairs1 x)
-  (define (is-already-counted c e)
-    (if (null? c)
-	#f
-	(if (eq? (car c) e)
-	    #t
-	    (is-already-counted (cdr c) e))))
   (define counted ())
   (define (count-helper x)
     (if (not (pair? x))
 	0
-	(if (is-already-counted counted x)
+	(if (memq x counted)
 	    0
 	    (begin (set! counted (cons x counted))
 	     	   (+ (count-helper (car x))
 		      (count-helper (cdr x))
 		      1)))))
   (count-helper x))
-    
+
+;;ex3.18
+(define (is-infinite x)
+  (define found ())
+  (define (iter x)
+    (if (not (pair? x))
+	#f
+	(begin (set! found (cons x found))
+	       (print found)
+	       (if (memq (cdr x) found)
+		   #t
+		   (iter (cdr x))))))
+  (iter x))
+
+;;ex3.19
+(define (is-infinite-const x)
+  (define (safe-cdr l)
+    (if (pair? l)
+	(cdr l)
+	()))
+  (define (iter tortoise hare)
+    (cond ((not (pair? tortoise)) #f)
+	  ((not (pair? hare)) #f)
+	  ((eq? tortoise hare) #t)
+	  (else (iter (safe-cdr tortoise) (safe-cdr (safe-cdr hare))))))
+  (iter (safe-cdr x) (safe-cdr (safe-cdr x))))
+
+;;ex3.20
+(define x (cons 1 2))
+;;grobal-env->[cons, car, cdr, set-car! set-cdr!]
+;;             |
+;;          x-(body, E1->[x:1, y:2])
+(define z (cons x x))
+;;grobal-env->[cons, car, cdr, set-car! set-cdr!]
+;;             |                        |
+;;          x-(body, E1->[x:1, y:2])  z-(body, E2->[x:x, y:x]
+(set-car! (cdr z) 17)
+;;grobal-env->[cons, car, cdr, set-car! set-cdr!]
+;;             |                        |
+;;          x-(body, E1->[x:1, y:17])  z-(body, E2->[x:x, y:x]
+(car x)
+;;y:17
