@@ -547,6 +547,46 @@
 	    (else (error "Unknown operation: TABLE" m))))
     dispatch))
     
-    
+;;ex3.25
+(define (assoc key records)
+  (cond ((null? records) #f)
+	((eq? key (caar records)) (car records))
+	(else (assoc key (cdr records)))))
+
+(define (make-multikey-table)
+  (let ((local-table (list (list '*table*))))
+    (define (lookup-table table key) (assoc key (cdr table)))
+    (define (lookup keys table)
+      (cond ((null? keys) #f)
+	    ((null? (cdr keys))
+	     (let ((record (lookup-table table (car keys))))
+	       (if record (cdr record) #f)))
+	    (else
+	     (let ((subtable (lookup-table table (car keys))))
+	       (if subtable (lookup (cdr keys) subtable) #f)))))
+    (define (insert! keys value table)
+      (cond ((null? keys) (error "Key is null: INSERT"))
+	    ((null? (cdr keys))
+	     (let ((record (lookup-table table (car keys))))
+	       (if record
+		   (set-cdr! record value)
+		   (set-cdr! table (cons (cons (car keys) value) (cdr table))))))
+	    (else
+	     (let ((subtable (lookup-table table (car keys))))
+	       (if subtable
+		   (insert! (cdr keys) value subtable)
+		   (let ((newtable (list (car keys))))
+		     (insert! (cdr keys) value newtable)
+		     (set-cdr! table (cons newtable (cdr table))))))))
+      'ok)
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) (lambda (keys) (lookup keys local-table)))
+	    ((eq? m 'insert-proc!) (lambda (keys value) (insert! keys value local-table)))
+	    (else (error "Unknown operation: TABLE" m))))
+    dispatch))
+
+(define mt (make-multikey-table))
+
+  
 	      
 	      
