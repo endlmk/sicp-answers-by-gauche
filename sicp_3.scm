@@ -587,6 +587,46 @@
 
 (define mt (make-multikey-table))
 
-  
-	      
-	      
+;;ex3.26
+;;(キー、値)のレコードを要素とし、キーをもとに二分木を構築する
+;;辞書の探索にはlookup、挿入にはadjoin-setを使う
+
+;;ex3.27
+(define memo-fib
+  (memoize
+   (lambda (n)
+     (cond ((= n 0) 0)
+	   ((= n 1) 1)
+	   (else (+ (memo-fib (- n 1)) (memo-fib (- n 2))))))))
+(define (memoize f)
+  (let ((table (make-table)))
+    (lambda (x)
+      (let ((previously-computed-result (lookup x table)))
+	(or previously-computed-result
+	    (let ((result (f x)))
+	      (insert! x result table)
+	      result))))))
+;;(memo-fib 3)
+;;grobal-env->[memo-fib memoize]
+;;             |
+;;     memoize-(body, e)->[table, x:3]
+;;(memo-fib 2) -> (+ 1 0)
+;;grobal-env->[memo-fib memoize]
+;;             |
+;;     memoize-(body, e)->[table, x:2]
+;;(memo-fib 1)
+;;grobal-env->[memo-fib memoize]
+;;             |
+;;     memoize-(body, e)->[table(1), x:1]
+;;(memo-fib 0)
+;;grobal-env->[memo-fib memoize]
+;;             |
+;;     memoize-(body, e)->[table(1), x:0]
+;;(memo-fib 1) -> 1
+;;grobal-env->[memo-fib memoize]
+;;             |
+;;     memoize-(body, e)->[table((1,1)(0,0)), x:2]
+;;(+ (+ 1 0) 1)
+;; 2
+;;(memoize fib)ではうまくいかない。
+;;再帰呼出しにてその結果をメモする必要があるが、上記では再帰呼び出しがメモされない。
