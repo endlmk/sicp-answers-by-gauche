@@ -630,3 +630,53 @@
 ;; 2
 ;;(memoize fib)ではうまくいかない。
 ;;再帰呼出しにてその結果をメモする必要があるが、上記では再帰呼び出しがメモされない。
+
+;;ex3.28
+(define (inverter input output)
+  (define (invert-input)
+    (let ((new-value (logical-not (get-signal input))))
+      (after-delay inverter-delay (lambda () (set-signal! output new-value)))))
+  (add-action! input invert-input)
+  'ok)
+(define (logical-not s)
+  (cond ((= s 0) 1)
+	((= s 1) 0)
+	(else (error "Invalid signal" s))))
+
+(define (and-gate a1 a2 output)
+  (define (and-action-procedure)
+    (let ((new-value (logical-and (get-signal a1) (get-signal a2))))
+      (after-delay and-gate-delay (lambda () (set-signal! output new-value)))))
+  (add-action! and-action-procedure a1)
+  (add-action! and-action-procedure a2)
+  'ok)
+(define (logical-and s1 s2)
+  (cond ((= s1 1) (= s2 1) 1)
+	((= s1 1) (= s2 0) 0)
+	((= s1 0) (= s2 1) 0)
+	((= s1 0) (= s2 0) 0)
+	(else (error "Invalid signal" s1 s2))))
+
+(define (or-gate a1 a2 output)
+  (define (or-action-procedure)
+    (let ((new-value (logical-or (get-signal a1) (get-signal a2))))
+      (after-delay or-gate-delay (lambda () (set-signal! output new-value)))))
+  (add-action! or-action-procedure a1)
+  (add-action! or-action-procedure a2)
+  'ok)
+(define (logical-or s1 s2)
+  (cond ((= s1 1) (= s2 1) 1)
+	((= s1 1) (= s2 0) 1)
+	((= s1 0) (= s2 1) 1)
+	((= s1 0) (= s2 0) 0)
+	(else (error "Invalid signal" s1 s2))))
+
+;;ex3.29
+(define (or-gate a1 a2 output)
+  (let ((b1 (make-wire)) (b2 (make-wire)) (c (make-wire)))
+    (inverter a1 b1)
+    (inberter a2 b2)
+    (and-gate b1 b2 c)
+    (inverter c output)
+    'ok))
+;;遅延時間=and-gate-delay+2*inverter-delay
