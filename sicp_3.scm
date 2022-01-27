@@ -680,3 +680,28 @@
     (inverter c output)
     'ok))
 ;;遅延時間=and-gate-delay+2*inverter-delay
+
+;;ex3.30
+(define (half-adder a b s c)
+  (let ((d (make-wire)) (e (make-wire)))
+    (or-gate a b d)
+    (and-gate a b c)
+    (inverter c e)
+    (and-gate d e s)
+    'ok))
+(define (full-adder a b c-in sum c-out)
+  (let ((s (make-wire)) (c1 (make-wire)) (c2 (make-wire)))
+    (half-adder b c-in s c1)
+    (half-adder a s sum c2)
+    (or-gate c1 c2 c-out)
+    'ok))
+(define (ripple-carry-adder a b s c)
+  (cond ((null? a) (error "Invalid Input"))
+	((null? (cdr a)) (full-adder (car a) (car b) 0 (car s) c))
+	(else (let ((c-out (make-wire)))
+		(ripple-carry-adder (cdr a) (cdr b) (cdr s) c-out)
+		(full-adder (car a) (car b) c-out (car s) c)))))
+;; half-adder max(or*2+inv, and+or)
+;; full-adder 2*half + or
+;; ripple-carry-adder n*full = 2*n*max(or*2+inv, and+or)+or
+  
