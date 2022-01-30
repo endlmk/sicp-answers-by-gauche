@@ -801,3 +801,17 @@
 	(front-queue (segment-queue first-seg)))))
 
 ;;キューでなくスタックにすると(1->0)->(0->1)の順に処理され、間違った結果になる。
+
+;;ex3.33
+(define (averager a b c)
+  (let ((u (make-connector))
+	(v (make-connector)))
+    (adder a b u)
+    (multiplier c v u)
+    (constant 2 v)
+    'ok))
+
+;;ex3.34
+;;multiplierは3つの値のうち2つが定まらないと残り1つが定まらない。
+;;ゆえにaが不定な場合、b1つだけが定まることとなるので、aを定めることができない。
+
