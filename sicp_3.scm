@@ -887,8 +887,8 @@
   me)
 
 (define (make-connector)
-  (let ((value false)
-	(informant false)
+  (let ((value #f)
+	(informant #f)
 	(constraints ()))
     (define (set-my-value newval setter)
       (cond ((not (has-value? me))
@@ -898,9 +898,9 @@
 	    ((not (= value newval))
 	     (error "Contradiction" (list value newval)))
 	    (else 'ignored)))
-    (define (forge-my-value retractor)
+    (define (forget-my-value retractor)
       (if (eq? retractor informant)
-	  (begin (set! informant false)
+	  (begin (set! informant #f)
 		 (for-each-except retractor inform-about-no-value constraints))
 	  'ignored))
     (define (connect new-constraint)
@@ -910,7 +910,7 @@
 	  (inform-about-value new-constraint))
       'done)
     (define (me request)
-      (cond ((eq? request 'has-value?) (if informant true false))
+      (cond ((eq? request 'has-value?) (if informant #t #f))
 	    ((eq? request 'value) value)
 	    ((eq? request 'set-value!) set-my-value)
 	    ((eq? request 'forget) forget-my-value)
@@ -929,7 +929,7 @@
 (define (get-value connector) (connector 'value))
 (define (set-value! connector new-value informant) ((connector 'set-value!) new-value informant))
 (define (forget-value! connector retractor) ((connector 'forget) retractor))
-(define (connect connector new-constraint) ((connectro 'connect) new-constraint))
+(define (connect connector new-constraint) ((connector 'connect) new-constraint))
 
 (define (squarer a b)
   (define (process-new-value)
@@ -950,3 +950,45 @@
   (connect a me)
   (connect b me)
   me)
+
+;;ex3.36
+;;global-env->[a, inform-about-value, make-connector, for-each-except]
+;;             |
+;;            (body, env)->[value:10, informant:'user, constraints:()]
+
+;;ex3.37
+(define (celsius-fahrenheit-converter x)
+  (c+ (c* (c/ (cv 9) (cv 5))
+	  x)
+      (cv 32)))
+(define C (make-connector))
+(define F (celsius-fahrenheit-converter C))
+(probe "Celsius temp" C)
+(probe "Fahrenheit temp" F)
+(set-value! C 25 'user)
+(forget-value! C 'user)
+(set-value! F 212 'user)
+
+(define (c+ x y)
+  (let ((z (make-connector)))
+    (adder x y z)
+    z))
+(define (c- x y)
+  (let ((z (make-connector)))
+    (adder y z x)
+    z))
+(define (c* x y)
+  (let ((z (make-connector)))
+    (multiplier x y z)
+    z))
+(define (c/ x y)
+  (let ((z (make-connector)))
+    (multiplier y z x)
+    z))
+(define (cv c)
+  (let ((z (make-connector)))
+    (constant c z)
+    z))
+
+
+  
