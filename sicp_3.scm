@@ -990,5 +990,27 @@
     (constant c z)
     z))
 
+;;ex3.38
+;;a
+;;Paul->Peter->Mary 45
+;;Paul->Mary->Peter 35
+;;Peter->Paul->Mary 45
+;;Peter->Mary->Paul 50
+;;Mary->Peter->Paul 40
+;;Mary->Paul->Peter 40
+;;b
+;;   Peter Paul Mary Acc
+;;   100   100  100  100
+;;1. 110             110 <-Peter
+;;2.　  　 　　80        80 <-Paul
+;;3.             50   50 <-Mary
+;;         110  110  110 <-Peter      
+;;4.        90           <-Paul
+;;5.             55      <-Mary
+;;    80         80   80 <-Paul
+;;6.  90              90 <-Peter
+;;7.             45   45 <-Paul
+;;    50    50        50 <-Mary
+;;8.  60              60 <-Peter
+;;9.        30        30 <-Mary
 
-  
