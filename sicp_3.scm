@@ -1014,3 +1014,14 @@
 ;;8.  60              60 <-Peter
 ;;9.        30        30 <-Mary
 
+;;ex3.39
+;;1. プロセスに割り込みなく以下の順に実行されると、101
+(set! x (s (lambda () (* x x)))))
+(s (lambda () (set! x (+ x 1))))
+;;2. プロセスに割り込みなく以下の順に実行されると、121
+(s (lambda () (set! x (+ x 1))))
+(set! x (s (lambda () (* x x)))))
+;;3. (s (lambda () (* x x))))->(s (lambda () (set! x (+ x 1))))->(set! x (...))
+;;となった場合、100
+(set! x (s (lambda () (* x x)))))
+(s (lambda () (set! x (+ x 1))))
