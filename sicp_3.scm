@@ -1065,5 +1065,12 @@
 ;;Exchangeは残高取得を伴うが、Transferは残高取得がない
 ;;Transferは直列化された各口座への操作を逐次実行することになるので、Transfer自体を直列化する必要はない。
 
-;;ex4.45
+;;ex3.45
 ;;(serializer1 (serializer2 (serializer1 withdraw)))となり、最内の手続きが最外の手続きが終わるのを待つが、最外の手続きが実行中であるため、待ち続けてしまう。
+
+;;ex3.46
+;;a              b          cell
+;;(car cell)                    #f
+;;               (car cell)     #f
+;;(set! cell #t)                #t
+;;               (set! cell #t) #t
