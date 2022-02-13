@@ -1016,14 +1016,14 @@
 
 ;;ex3.39
 ;;1. プロセスに割り込みなく以下の順に実行されると、101
-(set! x (s (lambda () (* x x)))))
+(set! x (s (lambda () (* x x))))
 (s (lambda () (set! x (+ x 1))))
 ;;2. プロセスに割り込みなく以下の順に実行されると、121
 (s (lambda () (set! x (+ x 1))))
-(set! x (s (lambda () (* x x)))))
+(set! x (s (lambda () (* x x))))
 ;;3. (s (lambda () (* x x))))->(s (lambda () (set! x (+ x 1))))->(set! x (...))
 ;;となった場合、100
-(set! x (s (lambda () (* x x)))))
+(set! x (s (lambda () (* x x))))
 (s (lambda () (set! x (+ x 1))))
 
 ;;ex3.40
@@ -1074,3 +1074,43 @@
 ;;               (car cell)     #f
 ;;(set! cell #t)                #t
 ;;               (set! cell #t) #t
+
+;;ex3.47
+(define (make-semaphore n)
+  (let ((mutex (make-mutex))
+	(count 0))
+    (define (the-semaphore m)
+      (cond ((eq? m 'acquire)
+	     (if (<= count n)
+		 (begin (mutex 'acquire)
+			(set! count (+ count 1))
+			(mutex 'release))
+		 (the-semaphore m)))
+	    ((eq? m 'release)
+	     (mutex 'acquire)
+	     (set! count (- count 1))
+	     (mutex 'release))))
+    the-semaphore))
+
+(define (make-semaphore2 n)
+  (let ((cell (list false))
+	(count 0))
+    (define (the-semaphore m)
+      (cond ((eq? m 'acquire)
+	     (if (<= count n)
+		 (if (test-and-set! cell)
+		     (the-semaphore m)
+		     (begin (set! count (+ count 1))
+			    (clear! cell)))
+		 (the-semaphore m)))
+	    ((eq? m 'release)
+	     (if (test-and-set! cell)
+		 (the-semaphore m)
+		 (begin (set! count (- count 1))
+			(clear! cell))))))
+    the-semaphore))
+		    
+	    
+		  
+	    
+
