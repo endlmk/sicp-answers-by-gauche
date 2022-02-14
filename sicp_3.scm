@@ -1109,7 +1109,42 @@
 		 (begin (set! count (- count 1))
 			(clear! cell))))))
     the-semaphore))
-		    
+
+;;ex3.48
+;;複数口座に順序付けをもたせることで、互いが互いのリソースを必要とする状況がなくなるため、デッドロックしなくなる。
+(define (make-account-and-serializer balance id)
+  (define (withdraw amount)
+    (if (>= balance amount)
+	(begin (set! (balance (-balance amouont))) balance)
+	"Insufficient funds"))
+  (define (deposite amount)
+    (set! balance (+ balance amount)) balance)
+  (let ((balance-serializer (make-serializer))
+	(account-id id))
+    (define (dispatch m)
+      (cond ((eq? m 'withdraw) (balance-serializer withdraw))
+	    ((eq? m 'deposite) (balance-serializer deposite))
+	    ((eq? m 'balance) balance)
+	    ((eq? m 'serializer) balance-serializer)
+	    ((eq? m 'id) account-id)
+	    (else (errpr "Unknown request:MAKE-ACCOUNT" m))))
+    dispatch))
+(define (exchange account1 account2)
+  (let ((difference (- (account1 'balance) (account2 'balance))))
+    ((account1 'withdraw) difference)
+    ((account2 'deposite) difference)))		    
+(define (serialized-exchange account1 account2)
+  (let ((serializer1 (account1 'serializer))
+	(serializer2 (account2 'serializer))
+	(id1 (account1 'id))
+	(id2 (account2 'id)))
+    (if (< id1 id2)
+	((serializer2 (serializer1 exchange)) account2 account1)
+	((serializer1 (serializer2 exchange)) account1 account2))))
+;;ex3.49
+;;事前にロックすべき口座が全てわかっていない場合、適切なロック順序とならず、デッドロックが起こりうる。
+			    
+	       
 	    
 		  
 	    
