@@ -1155,7 +1155,7 @@
   (if (= n 0)
       (stream-car s)
       (stream-ref (stream-cdr s) (- n 1))))
-(define (stream-map porc s)
+(define (stream-map proc s)
   (if (stream-null? s)
       the-empty-stream
       (cons-stream (proc (stream-car s)) (stream-map proc (stream-cdr s)))))
@@ -1167,6 +1167,14 @@
 (define (display-stream s)
   (stream-for-each display-line s))
 (define (display-line x) (newline) (display x))
+(define (stream-enumerate-interval low high)
+  (if (> low high)
+      the-empty-stream
+      (cons-stream low (stream-enumerate-interval (+ low 1) high))))
+(define (stream-filter pred stream)
+  (cond ((stream-null? stream) the-empty-stream)
+	((pred (stream-car stream)) (cons-stream (stream-car stream) (stream-filter pred (stream-cdr stream))))
+	(else (stream-filter pred (stream-cdr stream)))))
 
 ;;ex3.50
 (define (stream-map proc . argstreams)
@@ -1176,4 +1184,31 @@
        (apply proc (map stream-car argstreams))
        (apply stream-map (cons proc (map stream-cdr argstreams))))))
 			  
+;;ex3.51
+(define (show x)
+  (display-line x)
+  x)
+(define x (stream-map show (stream-enumerate-interval 0 10)))
+;;0x
+(stream-ref x 5)
+;;1
+;;2
+;;3
+;;4
+;;55
+(stream-ref x 7)
+;;6
+;;77
 
+;;cons-streamで結合した要素がstream-cdrで取り出される際に、showが実行される。つまりdisplay-lineが遅延実行される。
+
+;;ex3.52
+(define sum 0) ;;sum:0
+(define (accum x) (set! sum (+ x sum)) sum) ;;sum:0
+(define seq (stream-map accum (stream-enumerate-interval 1 20))) ;;sum:1
+(define y (stream-filter even? seq)) ;;sum:6
+(define z (stream-filter (lambda (x) (= (remainder x 5) 0)) seq)) ;;sum:10
+(stream-ref y 7) ;;sum:136(sum of 1~16)
+(display-stream z) ;;sum:210(sum of 1-20)
+;;メモ化しないと結果が変わる。delayを一度評価した後、再度評価するとaccumが実行され、sumに再度要素との和が代入されることになる。
+;;メモ化した場合は、sumは1から評価した要素の位置までの和が維持されるが、メモ化しないと上記により実行のたびにsumが増加する。
