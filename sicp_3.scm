@@ -1212,3 +1212,40 @@
 (display-stream z) ;;sum:210(sum of 1-20)
 ;;メモ化しないと結果が変わる。delayを一度評価した後、再度評価するとaccumが実行され、sumに再度要素との和が代入されることになる。
 ;;メモ化した場合は、sumは1から評価した要素の位置までの和が維持されるが、メモ化しないと上記により実行のたびにsumが増加する。
+
+(define (integers-starting-from n)
+  (cons-stream n (integers-starting-from (+ n 1))))
+(define integers (integers-starting-from 1))
+(define (divisible? x y) (= (remainder x y) 0))
+(define no-sevens (stream-filter (lambda (x) (not (divisible? x 7))) integers))
+(define (fibgen a b) (cons-stream a (fibgen b (+ a b))))
+(define fibs (fibgen 0 1))
+(define (sieve stream)
+  (cons-stream (stream-car stream)
+	       (sieve (stream-filter (lambda (x) (not (divisible? x (stream-car stream)))) (stream-cdr stream)))))
+(define primes (sieve (integers-strating-from 2)))
+
+(define ones (cons-stream 1 ones))
+(define (add-stream s1 s2) (stream-map + s1 s2))
+(define integers (cons-stream 1 (add-stream ones integers)))
+(define (scale-stream stream factor)
+  (stream-map (lambda (x) (* x factor)) stream))
+(define double (cons-stream 1 (scale-stream double 2)))
+(define primes
+  (cons-stream 2
+	       (stream-filter prime? (integers-starting-from 3))))
+(define (prime? n)
+  (define (iter ps)
+    (cond ((> (square (stream-car ps)) n) #t)
+	  ((divisible? n (stream-car ps)) #f)
+	  (else (iter (stream-cdr ps)))))
+  (iter primes))
+	   
+;;ex3.53
+(define s (cons-stream 1 (add-stream s s)))
+;; 1 2 4 8...
+;; 一つ前の要素を二倍する、つまり2のべき乗になる。
+
+;;ex3.54
+(define (mul-streams s1 s2) (stream-map * s1 s2))
+(define factorials (cons-stream 1 (mul-streams (integers-starting-from 2) factorials)))
