@@ -1226,8 +1226,9 @@
 (define primes (sieve (integers-strating-from 2)))
 
 (define ones (cons-stream 1 ones))
-(define (add-stream s1 s2) (stream-map + s1 s2))
+(define (add-streams s1 s2) (stream-map + s1 s2))
 (define integers (cons-stream 1 (add-stream ones integers)))
+(define fibs (cons-stream 0 (cons-stream 1 (add-streams (stream-cdr fibs) fibs)))) 
 (define (scale-stream stream factor)
   (stream-map (lambda (x) (* x factor)) stream))
 (define double (cons-stream 1 (scale-stream double 2)))
@@ -1242,10 +1243,34 @@
   (iter primes))
 	   
 ;;ex3.53
-(define s (cons-stream 1 (add-stream s s)))
+(define s (cons-stream 1 (add-streams s s)))
 ;; 1 2 4 8...
 ;; 一つ前の要素を二倍する、つまり2のべき乗になる。
 
 ;;ex3.54
 (define (mul-streams s1 s2) (stream-map * s1 s2))
 (define factorials (cons-stream 1 (mul-streams (integers-starting-from 2) factorials)))
+
+;;ex3.55
+(define (partial-sums s) (cons-stream (stream-car s) (stream-map + (partial-sums s) (stream-cdr s))))
+
+;;ex3.56
+(define (merge s1 s2)
+  (cond ((stream-null? s1) s2)
+	((stream-null? s2) s1)
+	(else
+	 (let ((s1car (stream-car s1))
+	       (s2car (stream-car s2)))
+	   (cond ((< s1car s2car) (cons-stream s1car (merge (stream-cdr s1) s2)))
+		 ((> s1car s2car) (cons-stream s2car (merge (stream-cdr s2) s1)))
+		 (else (cons-stream s1car (merge (stream-cdr s1) (stream-cdr s2)))))))))
+(define S (cons-stream 1 (merge (merge (scale-stream S 2) (scale-stream S 3)) (scale-stream S 5))))
+		      
+;;ex3.57
+;;n=1 
+;;n=2 (+ 1 0)
+;;n=3 (+ 1(=メモ化された3番目の1) 1(=2番目の1))
+;;n=4 (+ 2(=メモ化された4番目の2) 1(=メモ化された3番目の1)
+;;n番目の計算にn-1回の加算が行われる
+;;メモ化がないと、メモ化されていた要素が遡って計算される。その回数はフィボナッチ数列に等しいため、指数的に増加する。
+
