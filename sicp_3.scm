@@ -1223,11 +1223,11 @@
 (define (sieve stream)
   (cons-stream (stream-car stream)
 	       (sieve (stream-filter (lambda (x) (not (divisible? x (stream-car stream)))) (stream-cdr stream)))))
-(define primes (sieve (integers-strating-from 2)))
+(define primes (sieve (integers-starting-from 2)))
 
 (define ones (cons-stream 1 ones))
 (define (add-streams s1 s2) (stream-map + s1 s2))
-(define integers (cons-stream 1 (add-stream ones integers)))
+(define integers (cons-stream 1 (add-streams ones integers)))
 (define fibs (cons-stream 0 (cons-stream 1 (add-streams (stream-cdr fibs) fibs)))) 
 (define (scale-stream stream factor)
   (stream-map (lambda (x) (* x factor)) stream))
@@ -1274,3 +1274,25 @@
 ;;n番目の計算にn-1回の加算が行われる
 ;;メモ化がないと、メモ化されていた要素が遡って計算される。その回数はフィボナッチ数列に等しいため、指数的に増加する。
 
+;;ex3.58
+(define (expand num den radix)
+  (cons-stream (quotient (* num radix) den)
+	       (expand (remainder (* num radix) den) den radix)))
+;;numとradixの積をdenで割った商を返す。
+;;numをnumとradixの積をdenで割った余りに置き換えて、繰り返す
+;;(expand 1 7 10) 1 4 2 8 5 7 1...
+;;(expand 3 8 10) 3 7 5 0
+;;radixを基数とした、numをdenで割り算した値の各桁の数列
+
+;;ex3.59
+(define (integrate-series a)
+  (stream-map / a integers))
+(define exp-series (cons-stream 1 (integrate-series exp-series)))
+(define cosine-series (cons-stream 1 (stream-map - (integrate-series sine-series))))
+(define sine-series (cons-stream 0 (integrate-series cosine-series)))
+
+;;ex3.60
+(define (mul-series s1 s2)
+  (cons-stream (* (stream-car s1) (stream-car s2))
+	       (add-streams (scale-stream (stream-cdr s2) (stream-car s1))
+			    (mul-series (stream-cdr s1) s2))))
