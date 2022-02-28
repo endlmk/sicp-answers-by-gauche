@@ -1292,7 +1292,22 @@
 (define sine-series (cons-stream 0 (integrate-series cosine-series)))
 
 ;;ex3.60
+;;a0+a1x+a2x^2
+;;b0+b1x+b2x^2
+;;x^2=a0*b2+b1*a1+a2*b0
 (define (mul-series s1 s2)
   (cons-stream (* (stream-car s1) (stream-car s2))
 	       (add-streams (scale-stream (stream-cdr s2) (stream-car s1))
 			    (mul-series (stream-cdr s1) s2))))
+
+;;ex3.61
+(define (invert-unit-series a)
+  (define x (cons-stream 1 (mul-series (stream-map - (stream-cdr a)) x)))
+  x)
+
+;;ex3.62
+(define (div-series s1 s2)
+  (cond ((= (stream-car s2) 0) (error "denominator constant is zero"))
+	(else (mul-series s1 (invert-unit-series s2)))))
+(define tangent-series (div-series sine-series cosine-series))
+;;0 1 0 1/3 0 2/15...
