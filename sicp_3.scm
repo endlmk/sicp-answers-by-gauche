@@ -1311,3 +1311,74 @@
 	(else (mul-series s1 (invert-unit-series s2)))))
 (define tangent-series (div-series sine-series cosine-series))
 ;;0 1 0 1/3 0 2/15...
+
+;;ex3.63
+;;sqrt-streamの結果がメモ化されず、stream-cdrのたびに実行される。
+;;delayがメモ化されていなければ、どちらのバージョンも同じ計算量となる。
+
+;;ex3.64
+(define (stream-limit s tolerance)
+  (let ((e1 (stream-car s))
+	(e2 (stream-car (stream-cdr s))))
+    (if (<= (abs (- e1 e2)) tolerance)
+	e2
+	(stream-limit (stream-cdr s) tolerance))))
+(define (average a b)
+  (/ (+ a b) 2))
+(define (sqrt-improve guess x)
+  (average guess (/ x guess)))
+(define (sqrt-stream x)
+  (define guesses (cons-stream 1.0 (stream-map (lambda (guess) (sqrt-improve guess x)) guesses)))
+  guesses)
+(define (sqrt x tolerance)
+  (stream-limit (sqrt-stream x) tolerance))
+
+;;ex3.65
+(define (ln-summands n)
+  (cons-stream (/ 1.0 n) (stream-map - (ln-summands (+ n 1)))))
+(define ln-stream (partial-sums (ln-summands 1)))
+;;1.0
+;;0.5
+;;0.8333333333333333
+;;0.5833333333333333
+;;0.7833333333333332
+;;0.6166666666666666
+;;0.7595238095238095
+;;0.6345238095238095
+;;0.7456349206349207
+;;0.6456349206349207
+;;...
+(define (euler-transform s)
+  (let ((s0 (stream-ref s 0))
+	(s1 (stream-ref s 1))
+	(s2 (stream-ref s 2)))
+    (cons-stream (- s2 (/ (square (- s2 s1))
+			  (+ s0 (* -2 s1) s2)))
+		 (euler-transform (stream-cdr s)))))
+(display-stream (euler-transform ln-stream))
+;;0.7
+;;0.6904761904761905
+;;0.6944444444444444
+;;0.6924242424242424
+;;0.6935897435897436
+;;0.6928571428571428
+;;0.6933473389355742
+;;0.6930033416875522
+;;0.6932539682539683
+;;0.6930657506744464
+;;...
+(define (make-tableau transform s)
+  (cons-stream s (make-tableau transform (transform s))))
+(define (accelerated-sequence transform s)
+  (stream-map stream-car (make-tableau transform s)))
+(display-stream (accelerated-sequence euler-transform ln-stream))
+;;1.0
+;;0.7
+;;0.6932773109243697
+;;0.6931488693329254
+;;0.6931471960735491
+;;0.6931471806635636
+;;0.6931471805604039
+;;0.6931471805599445
+;;0.6931471805599427
+;;0.6931471805599454
