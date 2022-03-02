@@ -1175,6 +1175,15 @@
   (cond ((stream-null? stream) the-empty-stream)
 	((pred (stream-car stream)) (cons-stream (stream-car stream) (stream-filter pred (stream-cdr stream))))
 	(else (stream-filter pred (stream-cdr stream)))))
+(define (stream-head s n)
+  (define (iter s n)
+    (if (= n 0)
+	'done
+	(begin
+	  (display (stream-car s))
+	  (newline)
+	  (iter (stream-cdr s) (- n 1)))))
+  (iter s n))
 
 ;;ex3.50
 (define (stream-map proc . argstreams)
@@ -1382,3 +1391,20 @@
 ;;0.6931471805599445
 ;;0.6931471805599427
 ;;0.6931471805599454
+
+;;ex3.66
+(define (interleave s1 s2)
+  (if (stream-null? s1)
+      s2
+      (cons-stream (stream-car s1) (interleave s2 (stream-cdr s1)))))
+(define (pairs s t)
+  (cons-stream (list (stream-car s) (stream-car t))
+	       (interleave (stream-map (lambda (x) (list (stream-car s) x)) (stream-cdr t))
+			   (pairs (stream-cdr s) (stream-cdr t)))))
+;;(1　100) 2*99-1=197
+;;(i, j)に対して
+;;i=j -> 2^i-2
+;;j-1=i -> index(i, j-1)+2^(i-1)
+;;j-1>i -> index(i, j-1)+2^i
+;;(99 100) 2^99-2+2^98=950,737,950,171,172,051,122,527,404,030
+;;(100 100) 2^100-2=1,267,650,600,228,229,401,496,703,205,374
