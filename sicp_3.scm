@@ -1408,3 +1408,10 @@
 ;;j-1>i -> index(i, j-1)+2^i
 ;;(99 100) 2^99-2+2^98=950,737,950,171,172,051,122,527,404,030
 ;;(100 100) 2^100-2=1,267,650,600,228,229,401,496,703,205,374
+
+;;ex3.67
+(define (pairs2 s t)
+  (cons-stream (list (stream-car s) (stream-car t))
+	       (interleave (stream-map (lambda (x) (list (stream-car s) x)) (stream-cdr t))
+			   (interleave (stream-map (lambda (x) (list x (stream-car t))) (stream-cdr s))
+				       (pairs2 (stream-cdr s) (stream-cdr t))))))
