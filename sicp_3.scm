@@ -1415,3 +1415,39 @@
 	       (interleave (stream-map (lambda (x) (list (stream-car s) x)) (stream-cdr t))
 			   (interleave (stream-map (lambda (x) (list x (stream-car t))) (stream-cdr s))
 				       (pairs2 (stream-cdr s) (stream-cdr t))))))
+
+;;ex3.68
+(define (pairsl s t)
+  (interleave (stream-map (lambda (x) (list (stream-car s) x)) t)
+	      (pairsl (stream-cdr s) (stream-cdr t))))
+;;遅延ストリームとして定義されていないため、無限に再帰する。
+
+;;ex3.69
+(define (triples s t u)
+  (cons-stream (list (stream-car s) (stream-car t) (stream-car u))
+	       (interleave (stream-map (lambda (p) (cons (stream-car s) p))
+				       (interleave (stream-map (lambda (x) (list (stream-car t) x)) (stream-cdr u))
+						   (pairs (stream-cdr t) (stream-cdr u))))						   
+			   (triples (stream-cdr s) (stream-cdr t) (stream-cdr u)))))
+(define pitagoras (stream-filter (lambda (t) (= (+ (square (car t)) (square (cadr t))) (square (caddr t))))
+				 (triples integers integers integers)))
+
+;;ex3.70
+(define (merge-weighted s1 s2 weight)
+  (cond ((stream-null? s1) s2)
+	((stream-null? s2) s1)
+	(else
+	 (let ((s1car (stream-car s1))
+	       (s2car (stream-car s2)))
+	   (cond ((< (apply weight s1car) (apply weight s2car)) (cons-stream s1car (merge-weighted s2 (stream-cdr s1) weight)))
+		 (else (cons-stream s2car (merge-weighted s1 (stream-cdr s2) weight))))))))
+ (define (weighted-pairs s t weight)
+  (cons-stream (list (stream-car s) (stream-car t))
+	       (merge-weighted (stream-map (lambda (x) (list (stream-car s) x)) (stream-cdr t))
+			       (weighted-pairs (stream-cdr s) (stream-cdr t) weight)
+			       weight)))
+(define pair-sum-order (weighted-pairs integers integers (lambda (x y) (+ x y)))) 
+(define s235 (stream-filter (lambda (x) (and (not (or (= (remainder (car x) 2) 0) (= (remainder (car x) 3) 0) (= (remainder (car x) 5) 0)))
+					     (not (or (= (remainder (cadr x) 2) 0) (= (remainder (cadr x) 3) 0) (= (remainder (cadr x) 5) 0)))))
+			    (weighted-pairs integers integers (lambda (x y) (+ (* 2 x) (* 3 y) (* 5 x y)))))) 
+				    
