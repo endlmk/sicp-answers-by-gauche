@@ -1451,3 +1451,23 @@
 					     (not (or (= (remainder (cadr x) 2) 0) (= (remainder (cadr x) 3) 0) (= (remainder (cadr x) 5) 0)))))
 			    (weighted-pairs integers integers (lambda (x y) (+ (* 2 x) (* 3 y) (* 5 x y)))))) 
 				    
+;;ex3.71
+(define (triple-sum x y) (+ (* x x x) (* y y y)))
+(define tri-stream (weighted-pairs integers integers triple-sum))
+(define (iter-ramanujan s)
+  (if (= (apply triple-sum (stream-car s)) (apply triple-sum (stream-car (stream-cdr s))))
+      (cons-stream (apply triple-sum (stream-car s)) (iter-ramanujan (stream-cdr s)))
+      (iter-ramanujan (stream-cdr s))))
+(define ramanujan-number (iter-ramanujan tri-stream))
+
+;;ex3.72
+(define (square-sum x y) (+ (square x) (square y)))
+(define square-stream (weighted-pairs integers integers square-sum))
+(define (iter-square-three s)
+  (if (= (apply square-sum (stream-car s))
+	 (apply square-sum (stream-car (stream-cdr s)))
+	 (apply square-sum (stream-car (stream-cdr (stream-cdr s)))))
+      (cons-stream (apply square-sum (stream-car s)) (iter-square-three (stream-cdr s)))
+      (iter-square-three (stream-cdr s))))
+(define square-three (iter-square-three square-stream))
+				       
