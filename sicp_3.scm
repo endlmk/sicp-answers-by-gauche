@@ -1471,3 +1471,54 @@
       (iter-square-three (stream-cdr s))))
 (define square-three (iter-square-three square-stream))
 				       
+;;ex3.73
+(define (integral integrand initial-value dt)
+  (define int (cons-stream initial-value
+			   (add-streams (scale-stream integrand dt)
+					int)))
+  int)
+(define (RC R C dt)
+  (define (dispatch integrand initial-value)
+    (add-streams (scale-stream integrand R)
+		 (integral (scale-stream integrand (/ 1 C)) initial-value dt)))
+  dispatch)
+(define RC1 (RC 5 1 0.5))
+
+;;ex3.74
+(define (sign-change-detector a b)
+  (cond ((and (>= a 0) (< b 0)) 1)
+	((and (< a 0) (b >= 0)) -1)
+	(else 0)))
+(define (make-zero-crossings  input-stream last-value)
+  (cons-stream (sign-change-detector (stream-car input-stream) last-value)
+	       (make-zero-crossings (stream-cdr input-stream) (stream-car input-stream))))
+(define zero-crossings (make-zero-crossings sense-data 0))
+
+(define zero-crossings
+  (stream-map sign-change-detector
+	      sense-data
+	      (cons-stream 0 sense-data)))
+
+;;ex3.75
+(define (make-zero-crossings input-stream last-value)
+  (let ((avpt (/ (+ (stream-car input-stream) last-value) 2)))
+    (cons-stream (sign-change-detector avpt last-value)
+		 (make-zero-crossings (stream-cdr input-stream) avpt))))
+;;比較に使用している値が平滑化前の信号となっている
+;;平滑化後の前の信号を引数に渡す
+(define (make-zero-crossings input-stream last-value last-avpt)
+  (let ((avpt (/ (+ (stream-car input-stream) last-value) 2)))
+    (cons-stream (sign-change-detector avpt last-avpt)
+		 (make-zero-crossings (stream-cdr input-stream) (stream-car input-stream) avpt))))
+
+;;ex3.76
+(define (smooth s)
+  (stream-map (lambda (x y) (/ (+ x y) 2))
+	      s
+	      (cons-stream 0 s)))
+(define zero-crossings
+  (define s (smooth sense-data))
+  (stream-map sign-change-detector
+	      s
+	      (cons 0 s)))
+
