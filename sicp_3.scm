@@ -1522,3 +1522,50 @@
 	      s
 	      (cons 0 s)))
 
+(define (integral delayed-integrand initial-value dt)
+  (define int (cons-stream initial-value
+			   (let ((integrand (force delayed-integrand)))
+			     (add-streams (scale-stream integrand dt) int))))
+  int)
+(define (solve f y0 dt)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (stream-map f y))
+  y)
+(stream-ref (solve (lambda (y) y)
+		   1
+		   0.001)
+	    1000)
+;;ex3.77
+(define (integral delayed-integrand initial-value dt)
+  (cons-stream initial-value
+	       (let ((integrand (force delayed-integrand)))
+		 (if (stream-null? integrand)
+		     the-empty-stream
+		     (integral (delay (stream-cdr integrand)) (+ (* dt (stream-car integrand)) initial-value) dt)))))
+
+;;ex3.78
+(define (solve-2nd y0 dy0 a b dt)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (integral (delay ddy) dy0 dt))
+  (define ddy (add-streams (scale-stream dy a) (scale-stream y b)))
+  y)
+
+;;ex3.79
+(define (solve-2nd-f y0 dy0 f dt)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (integral (delay ddy) dy0 dt))
+  (define ddy (stream-map f dy y))
+  y)
+
+;;ex3.80
+(define (RLC R L C dt)
+  (define (dispatch vc0 il0)
+    (define il (integral (delay dil) il0 dt))
+    (define vc (integral (delay dvc) vc0 dt))
+    (define dil (add-streams (scale-stream il (/ (* R -1) L))
+			     (scale-stream vc (/ 1 L))))
+    (define dvc (scale-stream il (/ -1 C)))
+    (cons il vc))
+  dispatch)
+(define RLCgen (RLC 1 1 0.2 0.1))
+(define RLCstreams (RLCgen 10 0))
