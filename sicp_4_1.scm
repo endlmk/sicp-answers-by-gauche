@@ -8,6 +8,8 @@
 	((lambda? exp) (make-procedure (lambda-parameters exp) (lambda-body exp) env))
 	((begin? exp) (eval-sequence (begin-actions exp) env))
 	((cond? exp) (eval (cond->if exp) env))
+	((and? exp) (eval-and exp env))
+	((or? exp) (eval-or exp env))
 	((application? exp) (apply (eval (operator exp) env) (list-of-values (operands exp) env)))
 	(else (error "Unknown expression type: EVAL" exp))))
 (define (apply procedure arguments)
@@ -176,3 +178,62 @@
   (put 'eval-data-driven 'begin (lambda (exp env) (eval-sequence (begin-actions exp) env))))
 (define (install-cond)
   (put 'eval-data-driven 'cond (lambda (exp env) (eval (cond->if exp) env))))
+
+;;ex4.4
+(define (and? exp) (tagged-list? exp 'and))
+(define (or? exp) (tagged-list? exp 'or))
+(define (eval-and exp env)
+  (define (iter operands env)
+    (if (null? operands)
+	#t
+	(if (eval (car operands) env)
+	    (iter (cdr operands) env)
+	    #f)))
+  (iter (operands exp) env))
+(define (eval-or exp env)
+  (define (iter operands env)
+    (if (null? operands)
+	#f
+	(if (eval (car operands) env)
+	    #t
+	    (iter (cdr operands) env))))
+  (iter (operands exp) env))
+;;expand version
+(define (and->if exp)
+  (define (expand-and operands)
+    (if (null? operands)
+	#t
+	(make-if (car operands)
+		 (expand-and (cdr operands))
+		 #f)))
+  (expand-and (operands exp)))
+(define (or->if exp)
+  (define (expand-or operands)
+    (if (null? operands)
+	#f
+	(make-if (car operands)
+		 #t
+		 (expand-or (cdr operands)))))
+  (expand-or (operands exp)))
+;;evalの分岐に以下を追加する
+((and? exp) (eval (and->if exp) env))
+((or? exp) (eval (or->if exp) env))
+
+;;ex4.5
+(define (expand-clauses clauses)
+  (if (null? clauses)
+      #f
+      (let ((first (car clauses))
+	    (rest (cdr clauses)))
+	(if (cond-else-clauses? first)
+	    (if (null? rest)
+		(sequence->exp (cond-actions first))
+		(error "ELSE clause isn't last: COND->IF" clauses))
+	    (make-if (cond-predicate first)
+		     (if (eq? (car (cond-actions first)) '=>) ;; add
+			 (list (cadr (cond-actions first)) (cond-predicate first)) ;;add
+			 (sequence->exp (cond-actions first)))
+		     (expand-clauses rest))))))
+
+
+
