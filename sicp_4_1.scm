@@ -10,6 +10,8 @@
 	((cond? exp) (eval (cond->if exp) env))
 	((and? exp) (eval-and exp env))
 	((or? exp) (eval-or exp env))
+	((let*? exp) (eval (let*->nested-lets exp) env))
+	((let? exp) (eval (let->combination exp) env))
 	((application? exp) (apply (eval (operator exp) env) (list-of-values (operands exp) env)))
 	(else (error "Unknown expression type: EVAL" exp))))
 (define (apply procedure arguments)
@@ -235,5 +237,38 @@
 			 (sequence->exp (cond-actions first)))
 		     (expand-clauses rest))))))
 
+;;ex4.6
+(define (let? exp) (tagged-list? exp 'let))
+(define (let-var-exp exp) (cadr exp))
+(define (let-body exp) (caddr exp))
+(define (let-vars var-exp) (map car var-exp))
+(define (let-exps var-exp) (map cadr var-exp))
+(define (let->cobination exp)
+  (let ((vars (let-vars (let-var-exp exp)))
+	(exps (let-exps (let-var-exp exp)))
+	(body (let-body exp)))
+    (cons (make-lambda vars body) exps)))
 
+;;ex4.7
+;;(let* ((var1 exp1) (var2 exp2) ... (varn expn))
+;;  (body))
+;;->
+;;(let ((var1 exp1))
+;;  (let ((var2 exp2))
+;;   ...
+;;      (let ((varn expn))
+;;          (body))...))
+(define (let*->nested->let exp)
+  (define (iter var-exp body)
+    (if (null? vars)
+	body
+	(list 'let (list (car var-exp)) (iter (cdr var-exp body)))))
+  (let ((var-exp (let-var-exp exp))
+	(body (let-body exp)))
+    (iter var-exp body)))
+
+;;letを再帰的に処理可能なので、派生式として定義可能である
+
+  
+	
 
