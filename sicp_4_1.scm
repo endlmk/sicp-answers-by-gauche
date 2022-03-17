@@ -269,6 +269,39 @@
 
 ;;letを再帰的に処理可能なので、派生式として定義可能である
 
-  
+;;ex4.8
+(define (let? exp) (tagged-list? exp 'let))
+(define (let-has-proc? exp) (not (pair? (cadr exp))))
+(define (let-proc exp) (if (let-has-proc? exp) (cadr exp) #f))
+(define (let-var-exp exp) (if (let-has-proc? exp) (caddr exp) (cadr exp)))
+(define (let-body exp) (if (let-has-proc? exp) (cadddr exp) (caddr exp)))
+(define (let-vars var-exp) (map car var-exp))
+(define (let-exps var-exp) (map cadr var-exp))
+(define (let->cobination exp)
+  (let ((proc (let-proc exp))
+	(vars (let-vars (let-var-exp exp)))
+	(exps (let-exps (let-var-exp exp)))
+	(body (let-body exp)))
+    (if proc
+	(cons (cons 'define (cons (cons proc vars) body)) (cons proc exps))  ;; (define (proc vars...) (body)) (proc exps...)
+	(cons (make-lambda vars body) exps))))
+
+;;ex4.9
+;;(while exp body)
+;;->
+;;(let loop ()
+;;  (if exp
+;;      (begin body loop)))
+(define (while? (tagged-list? 'while)))
+(define (while->let exp)
+  (let ((condition (cadr exp))
+	(body (caddr exp)))
+    (list 'let 'loop () (make-if condition (make-begin (cons body 'loop))))))
+
+;;ex4.10
+;;skip.
+
+	      
+
 	
 
