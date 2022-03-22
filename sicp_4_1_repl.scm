@@ -235,7 +235,3 @@
 		     (procedure-body object)
 		     '<procedure-env>))
       (display object)))
-
-;;ex4.14
-;;schemeのmapを呼び出すとmapする関数をschemeの環境から探してしまうが、
-;;mapする関数はメタ循環評価器の環境にあるため発見できない。

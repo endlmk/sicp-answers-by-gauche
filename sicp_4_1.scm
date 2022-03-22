@@ -247,3 +247,11 @@
 	(let ((frame (first-frame env)))
 	  (scan (frame-variables frame) (frame-values frame)))))
   (env-loop env))
+
+;;ex4.14
+;;schemeのmapを呼び出すとmapする関数をschemeの環境から探してしまうが、
+;;mapする関数はメタ循環評価器の環境にあるため発見できない。
+
+;;ex4.15
+;;(halts? try try)がtrueの場合、tryは停止すると判定されているが、(run-forever)が実行され、無限に動き続けるので矛盾する。
+;;(halts? try try)がfalseの場合、tryは停止しないと判定されているが、'haltedを返して停止するので矛盾する。
