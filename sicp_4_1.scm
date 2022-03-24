@@ -255,3 +255,34 @@
 ;;ex4.15
 ;;(halts? try try)がtrueの場合、tryは停止すると判定されているが、(run-forever)が実行され、無限に動き続けるので矛盾する。
 ;;(halts? try try)がfalseの場合、tryは停止しないと判定されているが、'haltedを返して停止するので矛盾する。
+
+;;ex4.16
+;;a
+(define(look-up-variable-value var env)
+  (define (env-loop env)
+    (define (scan vars vals)
+      (cond ((null? vars) (env-loop (enclosing-environment env)))
+	    ((eq? var (car vars)) (if (eq? (car vals) '*unassigned*)
+				      (error "Unassigned value used" var)
+				      (car vals)))
+	    (else (scan (cdr vars) (cdr vals)))))
+    (if (eq? env the-empty-environment)
+	(error "Unbound variable" var)
+	(let ((frame (first-frame env)))
+	  (scan (frame-variables frame) (frame-values frame)))))
+  (env-loop env))
+;;b
+(define (scan-out-defines exp)
+  (let ((define-variables (map cadr (filter define? exp))))
+    (cons (list 'let (map (lambda (var) (list var '*unassigned*)) define-variables))
+	  (map (lambda (exp) (if (define? exp)
+				 (list 'set! (cdr exp))
+				 exp))
+	       exp))))
+;;c
+;;make-procedureに組み込む。評価回数が少なくなるため。
+(define (make-procedure parameters body env)
+  (list 'procedure parameters (scan-out-defines body) env))
+
+  
+    
