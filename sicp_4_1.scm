@@ -284,5 +284,26 @@
 (define (make-procedure parameters body env)
   (list 'procedure parameters (scan-out-defines body) env))
 
-  
-    
+;;ex4.17
+;;['true:#t, 'false:f ]
+;;(lambda <vars>
+;;  (define u <e1>)<-extend-env,add-bindings-to-frame! [[u:<e1>], ['true:#t, 'false:f ]]
+;;  (define v <e2>)<-extend-env,add-bindings-to-frame! [[v:<e2>], [u:<e1>], ['true:#t, 'false:f ]]
+;;  <e3>)
+
+;;(lambda <vars>
+;;  (let ((u '*unassigned*)
+;;        (v '*unassigned*))
+;;    (set! u <e1>)
+;;    (set! v <e2>)
+;;    <e3>))
+;;->
+;;(lambda <vars>
+;;  ((lambda (u v)<-extend-env [[u:'*unassigned*, v:'*unassigned*]['true:#t, 'false:f ]]
+;;     (set! u <e1>)<-extend-env,add-bindings-to-frame![[u:<e1>], [u:'*unassigned*, v:'*unassigned*]['true:#t, 'false:f ]]
+;;     (set! v <e2>)<-extend-env,add-bindings-to-frame![[v:<e2>], [u:<e1>], [u:'*unassigned*, v:'*unassigned*]['true:#t, 'false:f ]]
+;;     <e3>)
+;;     '*unassigned*
+;;     '*unassigned*)
+;;評価の際には自身の環境(リストの手前)から順に変数を探すので、'*unassigned*に行き着くことはない。
+;;letで束縛するのではなく、define-variable!で環境を拡張せずに自身のフレームに束縛を追加すればよい。
