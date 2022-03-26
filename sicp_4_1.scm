@@ -307,3 +307,23 @@
 ;;     '*unassigned*)
 ;;評価の際には自身の環境(リストの手前)から順に変数を探すので、'*unassigned*に行き着くことはない。
 ;;letで束縛するのではなく、define-variable!で環境を拡張せずに自身のフレームに束縛を追加すればよい。
+
+;;ex4.18
+;;(define (solve f y0 dt)
+;;  (define y (integral (delay dy) y0 dt))
+;;  (define dy (stream-map f y))
+;;  y)
+;;(define (solve f y0 dt)
+;;  (let ((y '*unassigned*) (dy '*unassigned*))
+;;    (let ((a (integral (delay dy) y0 dt)) (b (stream-map f y)))
+;;      (set! u a)
+;;      (set! v b))
+;;      y))
+;; aの束縛は動作する。(delay dy)なので、dyが'*unassigned*でも評価されないため。
+;; bを束縛する際に(stream-map f y)を評価した際、yが'*unassigned*のため、エラーとなる。
+;;(define (solve f y0 dt)
+;;  (let ((y '*unassigned*) (dy '*unassigned*))
+;;    (set! y (integral (delay dy) y0 dt))
+;;    (set! dy (stream-map f y))
+;;    y))
+;;動作する。dyを代入する際に、yはすでに'*unassigned*でない値が代入されているため、エラーにならない。
