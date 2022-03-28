@@ -334,3 +334,27 @@
 ;;その後の変数で以前未割当だった変数があれば、それを評価した後に後に回した変数を評価する。
 ;;ただし、変数間の依存関係がある場合、その依存関係に従った評価順序となるようにする必要がある。
 ;;これは変数間の依存関係グラフを構築して、依存関係を正しく解決する順序を作る処理となり、効率的には処理できない。
+
+;;ex4.20
+;;a
+(define (letrec? exp) (tagged-list? 'letrec))
+(define (letrec-vars exp) (map car (cadr exp)))
+(define (letrec-varsexps exp) (cadr exp))
+(define (letrec-body exp) (caddr exp))
+(define (letrec->let exp)
+  (let ((vars (letrec-vars exp))
+	(varsexps (letrec-varsexps exp))
+	(body (letrec-body exp)))
+    (list 'let
+	  (map (lambda (var) (list var '*unassinged*)) vars)
+	  (append (map (lambda (varexp) (cons 'set! varexp)) varsexps) (list body)))))
+;;b
+;;(define (f x)
+;;  (letrec ((even? (lambda (n) (if (= n 0) #t (odd? (- n 1))))) 
+;;  	     (odd? (lambda (n) (if (= n 0) #f (even? (- n 1))))))
+;;    (<body>))) -> [[odd?:lambda...], [even?:lambda...], [even?:'*unassigned*, odd?:'*unassigned*], [x:5],['true:#t, 'false:f ]]
+;;(define (f x)
+;;  (let ((even? (lambda (n) (if (= n 0) #t (odd? (- n 1))))) 
+;;  	     (odd? (lambda (n) (if (= n 0) #f (even? (- n 1))))))
+;;    (<body>))) , [[x:5], ['true:#t, 'false:f ]]
+;; even?にlambda関数を束縛する際に評価する環境ではodd?は未定義であり、エラーとなる。
