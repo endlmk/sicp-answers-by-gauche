@@ -358,3 +358,17 @@
 ;;  	     (odd? (lambda (n) (if (= n 0) #f (even? (- n 1))))))
 ;;    (<body>))) , [[x:5], ['true:#t, 'false:f ]]
 ;; even?にlambda関数を束縛する際に評価する環境ではodd?は未定義であり、エラーとなる。
+
+;;ex4.21
+;;a
+((lambda (n)
+   ((lambda (fact) (fact fact n))
+    (lambda (ft k) (if (= k 1) 1 (* k (ft ft (- k 1)))))))
+ 10)
+;;b
+(define (f x)
+  ((lambda (even? odd?) (even? even? odd? x))
+   (lambda (ev? od? n)
+     (if (= n 0) #t (od? ev? od? (- n 1))))
+   (lambda (ev? od? n)
+     (if (= n 0) #f (ev? ev? od? (- n 1))))))
