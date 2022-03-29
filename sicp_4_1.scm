@@ -27,7 +27,7 @@
   (hash-table-get *op-table* (list op type) #f))
 (define (eval-data-driven exp env)
   (cond ((self-evaluating? exp) exp)
-	((variable? exp) (look-up-value exp env))
+	((variable? exp) (lookup-value exp env))
 	(else (let ((proc (get 'eval-data-driven (get-tag exp))))
 		(if proc
 		    (proc exp env)
@@ -258,7 +258,7 @@
 
 ;;ex4.16
 ;;a
-(define(look-up-variable-value var env)
+(define(lookup-variable-value var env)
   (define (env-loop env)
     (define (scan vars vals)
       (cond ((null? vars) (env-loop (enclosing-environment env)))
