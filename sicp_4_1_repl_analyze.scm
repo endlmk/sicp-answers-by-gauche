@@ -130,7 +130,7 @@
 (define (begin-actions exp) (cdr exp))
 (define (last-exp? seq) (null? (cdr seq)))
 (define (first-exp seq) (car seq))
-(define (rest-exp seq) (cdr seq))
+(define (rest-exps seq) (cdr seq))
 ;; seq->exp
 (define (sequence->exp seq)
   (cond ((null? seq) seq)
@@ -190,10 +190,8 @@
 		     (expand-clauses rest))))))
 
 ;;4.1.3
-(define true #t)
-(define false #f)
-(define (true? x) (not (eq? x false)))
-(define (false? x) (eq? x false))
+(define (true? x) (not (eq? x #f)))
+(define (false? x) (eq? x #f))
 (define (make-procedure parameters body env)
   (list 'procedure parameters body env))
 (define (compound-procedure? p)

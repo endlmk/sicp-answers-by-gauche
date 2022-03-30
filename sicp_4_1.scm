@@ -393,3 +393,32 @@
 ;;(lambda (env) (proc1 env) (proc2 env))
 ;;Alyssa version
 ;;(lambda (env) (execute-sequence '(proc1 proc2) env))
+
+;;ex4.24
+(define (driver-loop)
+  (prompt-for-input input-prompt)
+  (let ((input (read)))
+    (let ((output (time (evalM input the-global-environment))))
+      (announce-output output-prompt)
+      (user-print output)))
+  (driver-loop))
+
+(define (fib n)
+  (define (fib-iter a b count)
+    (if (= count 0)
+        b
+        (fib-iter (+ a b) a (- count 1))))
+  (fib-iter 1 0 n))
+(fib 10000)
+
+;;not analyze version
+;;(time (evalM input the-global-environment))
+;; real   0.100
+;; user   0.120
+;; sys    0.000
+
+;;analyze version
+;;(time (evalM input the-global-environment))
+;; real   0.058
+;; user   0.080
+;; sys    0.020
