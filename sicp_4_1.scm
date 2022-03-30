@@ -372,3 +372,24 @@
      (if (= n 0) #t (od? ev? od? (- n 1))))
    (lambda (ev? od? n)
      (if (= n 0) #f (ev? ev? od? (- n 1))))))
+
+;;ex4.23
+;;Alyssa version
+(define (analyze-sequence exps)
+  (define (execute-sequence procs env)
+    (cond ((null? (cdr procs)) ((car procs) env))
+	  (else ((car procs) env) (execute-sequence (cdr procs) env))))
+  (let ((procs (map analyze exps)))
+    (if (null? procs) (error "Empty sequence: ANALYZE"))
+    (lambda (env) (execute-sequence procs env))))
+;;式が一つの場合->本文の方は解析した手続きを返すのに対し、Alyssaの方は解析した手続きをexecute-sequenceで処理するラムダ関数を返す。
+;;本文version
+;;proc1
+;;Alyssa version
+;;(lambda (env) (execute-sequence '(proc1) env))
+;;proc1
+;;式が2つの場合->本文の方は逐次処理が解析済みであるのに対し、Alyssaの方は評価の際に手続きのループ処理を行うので効率が悪い。
+;;本文version
+;;(lambda (env) (proc1 env) (proc2 env))
+;;Alyssa version
+;;(lambda (env) (execute-sequence '(proc1 proc2) env))
