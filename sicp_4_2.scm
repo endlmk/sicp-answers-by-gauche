@@ -16,3 +16,23 @@
     (make-if pproc cproc aproc)))
 ;;手続きだとmapのような高階関数に渡すことができる
 (map unless '(#t #t #f #f) '(1 2 3 4) '(5 6 7 8)) 
+
+;;ex4.27
+;;; L-Eval input:
+(define count 0)
+;;; L-Eval input:
+(define (id x) (set! count (+ count 1)) x)
+;;; L-Eval input:
+(define w (id (id 10))) ;;<-この時点では外側のidを評価した際にset!が呼ばれる。内側のidはサンクとして環境に配置され、未評価の状態である。
+;;; L-Eval input:
+count
+;;; L-Eval value:
+1 ;;<-上述の通り、set!が一度だけ呼ばれるためcountは1となる
+;;; L-Eval input:
+w ;;<-この際にdriver-loopのactual-valueでサンクである内側のidがforce-itされることでset!が呼ばれる
+;;; L-Eval value:
+10
+;;; L-Eval input:
+count
+;;; L-Eval value:
+1 ;;<-上述の通り、wを表示した際にset!が呼ばれるためcountは2となる
