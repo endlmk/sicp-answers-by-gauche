@@ -36,3 +36,11 @@ w ;;<-この際にdriver-loopのactual-valueでサンクである内側のidがf
 count
 ;;; L-Eval value:
 1 ;;<-上述の通り、wを表示した際にset!が呼ばれるためcountは2となる
+
+;;ex4.28
+;;引数として手続きを渡し、その手続きが適用される際、actual-valueで実際の値を取得しないと、applyでエラーとなる
+;;define (evalL exp env)
+;;	  ((application? exp) (apply (operator exp) (operands exp) env))
+;;とすると、以下の2つ目でエラーとなる
+(define (test f) (f 3))
+(test (lambda (x) (+ x 2)))
