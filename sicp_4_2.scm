@@ -44,3 +44,19 @@ count
 ;;とすると、以下の2つ目でエラーとなる
 (define (test f) (f 3))
 (test (lambda (x) (+ x 2)))
+
+;;ex4.29
+(define (rep x n)
+  (if (= n 0)
+      ()
+      (cons x (rep x (- n 1)))))
+(define (square x) (* x x))
+(rep (square 10) 10)
+;;メモ化がない場合、サンクとして渡された(square 10)が再帰のたびに評価される
+
+(define (square x) (* x x))
+(square (id 10))
+100
+count
+1 ;;メモ化がある場合、サンクを評価した際にset!が呼び出され、その後はメモ化されたサンクとなるため、set!が呼ばれない。よって、countは1となる。
+2 ;;メモ化がない場合、サンクを評価するたびにset!が呼ばれる。squareで二回サンクが評価されるため、countは2となる。
