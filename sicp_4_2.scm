@@ -60,3 +60,67 @@ count
 count
 1 ;;メモ化がある場合、サンクを評価した際にset!が呼び出され、その後はメモ化されたサンクとなるため、set!が呼ばれない。よって、countは1となる。
 2 ;;メモ化がない場合、サンクを評価するたびにset!が呼ばれる。squareで二回サンクが評価されるため、countは2となる。
+
+;;ex4.30
+;;a
+;;for-eachが作るbeginの各要素はfor-eachの第一引数の手続きを適用する。
+;;この引数のcarは基本手続きなので、遅延されない。
+;;また、この手続きの中のnewline,dislayも基本手続きなので、遅延されない。
+;;よって全てのリストの要素に対してdisplayが呼ばれる。
+;;b
+;;original
+;;; L-Eval input:
+(p1 1)
+
+;;; L-Eval value:
+(1 2)
+
+;;; L-Eval input:
+(p2 1)
+
+;;; L-Eval value:
+1
+
+;;Cy
+(define (eval-sequence exps env)
+  (cond ((last-exp? exps) (evalL (first-exp exps) env))
+	(else (actual-value (first-exp exps) env)
+	      (eval-sequence (rest-exps exps) env))))
+;;; L-Eval input:
+(p1 1)
+
+;;; L-Eval value:
+(1 2)
+
+;;; L-Eval input:
+(p2 1)
+
+;;; L-Eval value:
+(1 2)
+
+;;c
+(define (evalL exp env)
+  (cond ((self-evaluating? exp) exp)
+	((variable? exp) (lookup-variable-value exp env))
+	((quoted? exp) (text-of-quotation exp))
+	((assignment? exp) (eval-assignment exp env))
+	((definition? exp) (eval-definition exp env))
+	((if? exp) (eval-if exp env))
+	((lambda? exp) (make-procedure (lambda-parameters exp) (lambda-body exp) env))
+	((begin? exp) (eval-sequence (begin-actions exp) env))
+	((cond? exp) (evalL (cond->if exp) env))
+	((application? exp) (apply #?=(actual-value (operator exp) env) (operands exp) env))
+	(else (error "Unknown expression type: EVAL" exp))))
+(define (for-each proc items)
+  (if (null? items)
+      'done
+      (begin (proc (car items))
+	     (for-each proc (cdr items)))))
+(for-each (lambda (x) (newline) (display x))
+	  '(57 321 88))
+;;actual-valueはevalの後にforce-itを呼び、force-itは引数がサンクでない場合はそのまま引数を返すだけなので単にevalを呼ぶのと結果が変わらないため。
+
+;;d
+;;どちらにも難点がある。
+;;本文中の方式はCyの主張の通り、列中の最後のもの以外が使われない場合強制されない。
+;;Cyの方式は、列中は値は強制され、遅延されないことになる。

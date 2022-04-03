@@ -201,6 +201,8 @@
 	(list '- -)
 	(list '* *)
 	(list '/ /)
+	(list 'newline newline)
+	(list 'display display)
 	;; more primitives...
 	))
 (define (primitive-procedure-names) (map car primitive-procedures))
