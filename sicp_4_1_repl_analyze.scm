@@ -181,7 +181,7 @@
       #f
       (let ((first (car clauses))
 	    (rest (cdr clauses)))
-	(if (cond-else-clauses? first)
+	(if (cond-else-clause? first)
 	    (if (null? rest)
 		(sequence->exp (cond-actions first))
 		(error "ELSE clause isn't last: COND->IF" clauses))

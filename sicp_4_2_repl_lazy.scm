@@ -111,7 +111,6 @@
 (define (no-operands? ops) (null? ops))
 (define (first-operand ops) (car ops))
 (define (rest-operands ops) (cdr ops))
-;; cond->if
 (define (cond? exp) (tagged-list? exp 'cond))
 (define (cond-clauses exp) (cdr exp))
 (define (cond-else-clause? clause) (eq? (cond-predicate clause) 'else))
@@ -123,7 +122,7 @@
       #f
       (let ((first (car clauses))
 	    (rest (cdr clauses)))
-	(if (cond-else-clauses? first)
+	(if (cond-else-clause? first)
 	    (if (null? rest)
 		(sequence->exp (cond-actions first))
 		(error "ELSE clause isn't last: COND->IF" clauses))

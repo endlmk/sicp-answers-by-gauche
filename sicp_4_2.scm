@@ -129,3 +129,37 @@ count
 ;;See http://sioramen.sub.jp/blog/2008/02/sicp-422.html
 ;;procedureを作る際に、仮引数とペアになるlazyとlazy-memoを覚えておく。
 ;;applyにて、仮引数に引数を束縛する際に、procedureに覚えていたlazy,lazy-memo, ()(遅延なし、ペアでない仮引数)を使って、遅延させるか、メモ化ありの遅延をさせるかを分岐する。
+
+(define (cons x y) (lambda (m) (m x y)))
+(define (car z) (z (lambda (p q) p)))
+(define (cdr z) (z (lambda (p q) q)))
+(define (list-ref items n)
+  (if (= n 0)
+      (car items)
+      (list-ref (cdr items) (- n 1))))
+(define (map proc items)
+  (if (null? items)
+      ()
+      (cons (proc (car items)) (map proc (cdr items)))))
+(define (scale-list items factor)
+  (map (lambda (x) (* x factor)) items))
+(define (add-lists list1 list2)
+  (cond ((null? list1) list2)
+	((null? list2) list1)
+	(else (cons (+ (car list1) (car list2))
+		    (add-lists (cdr list1) (cdr list2))))))
+(define ones (cons 1 ones))
+(define integers (cons 1 (add-lists ones integers)))
+(define (integral integrand initial-value dt)
+  (define int
+    (cons initial-value
+	  (add-lists (scale-list integrand dt) int)))
+  int)
+(define (solve f y0 dt)
+  (define y (integral dy y0 dt))
+  (define dy (map f y))
+  y)
+(list-ref (solve (lambda (x) x) 1 0.001) 1000)
+;;ex4.32
+;;consの第一引数が遅延される。そのため、以下のような未定義のxのストリームが作れる。
+(define xs (cons x xs)))
