@@ -162,4 +162,28 @@ count
 (list-ref (solve (lambda (x) x) 1 0.001) 1000)
 ;;ex4.32
 ;;consの第一引数が遅延される。そのため、以下のような未定義のxのストリームが作れる。
-(define xs (cons x xs)))
+(define xs (cons x xs))
+
+;;ex4.33
+(define (evalL exp env)
+  (cond ((self-evaluating? exp) exp)
+	((variable? exp) (lookup-variable-value exp env))
+	((quoted? exp) (eval-quote exp env))
+	((assignment? exp) (eval-assignment exp env))
+	((definition? exp) (eval-definition exp env))
+	((if? exp) (eval-if exp env))
+	((lambda? exp) (make-procedure (lambda-parameters exp) (lambda-body exp) env))
+	((begin? exp) (eval-sequence (begin-actions exp) env))
+	((cond? exp) (evalL (cond->if exp) env))
+	((application? exp) (apply (actual-value (operator exp) env) (operands exp) env))
+	(else (error "Unknown expression type: EVAL" exp))))
+(define (eval-quote exp env)
+  (let ((text (text-of-quotation exp)))
+    (if (pair? text)
+	(evalL (quote->cons text) env)
+	text)))
+(define (quote->cons pair)
+  (if (pair? pair)
+      (list 'cons (quote->cons (car pair)) (quote->cons (cdr pair)))
+      (list 'quote pair)))
+
