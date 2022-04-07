@@ -187,3 +187,5 @@ count
       (list 'cons (quote->cons (car pair)) (quote->cons (cdr pair)))
       (list 'quote pair)))
 
+;;ex4.34
+;;skip
