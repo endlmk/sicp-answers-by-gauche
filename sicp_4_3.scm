@@ -10,7 +10,7 @@
   (let ((k (an-integer-starting-from 2)))
     (let ((i (an-integer-between 1 k)))
       (let ((j (an-integer-between i k)))
-	(require (= (+ (* i i) (* j j) (* k k))))
+	(require (= (+ (* i i) (* j j)) (* k k)))
 	(list i j k)))))
 
 ;;ex4.37
@@ -26,3 +26,10 @@
 ;;12 2
 ;;|\||
 ;;1222
+
+(define (require p) (if (not p) (amb)))
+(define (an-integer-starting-from n)
+  (amb n (an-integer-starting-from (+ n 1))))
+(define (an-integer-between l h)
+  (require (> h l))
+  (amb l (an-integer-between (+ l 1) h)))
