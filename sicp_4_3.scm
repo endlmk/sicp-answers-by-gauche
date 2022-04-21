@@ -176,7 +176,28 @@
 	  (list 'fletcher (fletcher ans))
 	  (list 'miller (miller ans))
 	  (list 'smith (smith ans)))))
-  
+
+;;ex4.42
+(define (solve-phillips)
+  (define (require-one l1 l2) (require (if l1 (not l2) l2)))
+  (let ((Betty (amb 1 2 3 4 5))
+	(Ethel (amb 1 2 3 4 5))
+	(Joan (amb 1 2 3 4 5))
+	(Kitty (amb 1 2 3 4 5))
+	(Mary (amb 1 2 3 4 5)))
+    (require (distinct? (list Betty Ethel Joan Kitty Mary)))
+    (require-one (= Kitty 2) (= Betty 3))
+    (require-one (= Ethel 1) (= Joan 2))
+    (require-one (= Joan 3) (= Ethel 5))
+    (require-one (= Kitty 2) (= Mary 4))
+    (require-one (= Mary 4) (= Betty 1))
+    (list (list 'Betty Betty)
+	  (list 'Ethel Ethel)
+	  (list 'Joan Joan)
+	  (list 'Kitty Kitty)
+	  (list 'Mary Mary))))
+	       
+    
   
   
   
