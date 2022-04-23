@@ -345,6 +345,7 @@
 	(list 'print print)
 	(list 'newline newline)
 	(list 'display display)
+	(list 'eq? eq?)
 	;; more primitives...
 	))
 (define (primitive-procedure-names) (map car primitive-procedures))
