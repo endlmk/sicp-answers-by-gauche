@@ -25,6 +25,8 @@
       	((begin? exp) (analyze-sequence (begin-actions exp)))
 	((cond? exp) (analyze (cond->if exp)))
 	((let? exp) (analyze (let->combination exp)))
+	((and? exp) (analyze (and->if exp)))
+	((or? exp) (analyze (or->if exp)))
 	((amb? exp) (analyze-amb exp))
       	((application? exp) (analyze-application exp))
 	(else (error "Unknown expression type: ANALYZE" exp))))
@@ -250,6 +252,26 @@
 	    (make-if (cond-predicate first)
 		     (sequence->exp (cond-actions first))
 		     (expand-clauses rest))))))
+
+;;and or
+(define (and? exp) (tagged-list? exp 'and))
+(define (or? exp) (tagged-list? exp 'or))
+(define (and->if exp)
+  (define (expand-and operands)
+    (if (null? operands)
+	'true
+	(make-if (car operands)
+		 (expand-and (cdr operands))
+		 'false)))
+  (expand-and (operands exp)))
+(define (or->if exp)
+  (define (expand-or operands)
+    (if (null? operands)
+	'false
+	(make-if (car operands)
+		'true
+		(expand-or (cdr operands)))))
+  (expand-or (operands exp)))
 
 ;;4.1.3
 (define (true? x) (not (eq? x false)))

@@ -31,7 +31,7 @@
 (define (an-integer-starting-from n)
   (amb n (an-integer-starting-from (+ n 1))))
 (define (an-integer-between l h)
-  (require (> h l))
+  (require (> (+ h 1) l))
   (amb l (an-integer-between (+ l 1) h)))
 (define (distinct? items)
   (cond ((null? items) true)
@@ -250,3 +250,36 @@
 		  (else 'Parker))))))))
 ;; Downing
 ;; MaryがMooreの娘とわからない場合、DowningとParkerが解となる。
+
+;;ex4.44
+(define (list-ref list p)
+  (if (= p 0) (car list)
+      (list-ref (cdr list) (- p 1))))
+(define (safe? k position)
+  (let ((kpos (list-ref position (- k 1))))
+    (define (safe?-iter p position)
+      (let ((target (car position)))
+	(if (= p k)
+	    true
+	    (if (or (= target kpos) (= target (- kpos (- k p))) (= target (+ kpos (- k p))))
+		false
+		(safe?-iter (+ p 1) (cdr position))))))
+    (safe?-iter 1 position)))
+(define (solve-8queen)
+  (let ((pos (list (an-integer-between 1 8)
+		   (an-integer-between 1 8)
+		   (an-integer-between 1 8)
+		   (an-integer-between 1 8)
+		   (an-integer-between 1 8)
+		   (an-integer-between 1 8)
+		   (an-integer-between 1 8)
+		   (an-integer-between 1 8))))
+    (define (iter k position)
+      (if (safe? k position)
+	  (if (= k 8)
+	      true
+	      (iter (+ k 1) position))
+	  false))
+    (require (iter 1 pos))
+    pos))
+  
