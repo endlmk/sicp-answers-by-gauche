@@ -435,3 +435,17 @@
       (prep-phrase
        (prep with)
        (simple-noun-phrase (article the) (noun cat)))))))))
+
+;;ex4.46
+;;被演算子が右から左に評価されるとする
+;;この場合、(parse-sentence)は(parse-verb-phrase)(parse-noun-phrase)の順に評価される
+;;the cat eatsをparseすると
+;;verbのparseで失敗ｰ>nounのparseで成功ｰ>*unparsed*にeatsが残り、失敗となる
+;;parseは入力を左から順に取り出し、左から解釈することを意図して書かれているため、評価順は左から右でなければならない。
+
+;;ex4.47
+;;解析対象の入力の最初が動詞でなかった場合、無限ループする。
+;;lecture to the studentの場合、lectureは成功し、次の解析を行う際、
+;;to the studentをparse-verb-pharseで解析することになり、無限ループに陥る
+;;引数を入れ替えても無限ループする
+
