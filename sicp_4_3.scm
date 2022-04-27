@@ -449,3 +449,42 @@
 ;;to the studentをparse-verb-pharseで解析することになり、無限ループに陥る
 ;;引数を入れ替えても無限ループする
 
+;;ex4.48
+(define adjectives '(adjective small big))
+(define adverbs '(adverb quickly hardly))
+
+(define (parse-adjective-noun-phrase)
+  (list 'adjective-noun-phrase
+	(parse-word articles)
+	(parse-word adjectives)
+	(parse-word nouns)))
+(define (parse-noun-phrase)
+  (define (maybe-extend noun-phrase)
+    (amb noun-phrase
+	 (maybe-extend
+	  (list 'noun-phrase
+		noun-phrase
+		(parse-prepositional-phrase)))))
+  (let ((noun-phrase (amb (parse-simple-noun-phrase)
+			  (parse-adjective-noun-phrase))))
+    (maybe-extend noun-phrase)))
+(define (parse-adverb-verb-phrase)
+  (list 'adverb-verb-phrase
+	(parse-word verbs)
+	(parse-word adverbs)))
+(define (parse-verb-phrase)
+  (define (maybe-extend verb-phrase)
+    (amb verb-phrase
+	 (maybe-extend
+	  (list 'verb-phrase
+		verb-phrase
+		(parse-prepositional-phrase)))))
+  (let ((verb-phrase (amb (parse-word verbs)
+			  (parse-adverb-verb-phrase))))
+    (maybe-extend verb-phrase)))
+
+;;ex4.49
+(define (parse-word word-list)
+  (require (not (null? *unphrased*)))
+  (set! *unphrased* (cdr *unphrased*))
+  (list (car word-list) (car (cdr word-list))))
