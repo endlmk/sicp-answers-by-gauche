@@ -28,6 +28,9 @@
 ;;1222
 
 (define (require p) (if (not p) (amb)))
+(define (an-element-of items)
+  (require (not (null? items)))
+  (amb (car items) (an-element-of (cdr items))))
 (define (an-integer-starting-from n)
   (amb n (an-integer-starting-from (+ n 1))))
 (define (an-integer-between l h)
@@ -549,3 +552,48 @@
   (let ((word (flatten-ramb (cdr word-list))))
     (set! *unphrased* (cdr *unphrased*))
     (list (car word-list) word)))
+
+;;ex4.51
+;; permanent assignment -> (parmanent-set! <variable> <value>)
+(define (parmanent-assignment? exp) (tagged-list? exp 'parmanent-set!))
+(define (analyze-parmanent-assignment exp)
+  (let ((var (assignment-variable exp))
+	(vproc (analyze (assignment-value exp))))
+    (lambda (env succeed fail)
+      (vproc env
+	     (lambda (val fail2) ;;失敗時に代入を取り消すため、古い値の代入を失敗継続に差し込んだ成功継続とする
+	       (set-variable-value! var val env)
+	       (succeed 'ok fail2))
+	     fail))))
+
+;;analyze
+(define (analyze exp)
+  (cond ((self-evaluating? exp) (analyze-self-evaluating exp))
+	((quoted? exp) (analyze-quoted exp))
+      	((variable? exp) (analyze-variable exp))
+	((assignment? exp) (analyze-assignment exp))
+	((parmanent-assignment? exp) (analyze-parmanent-assignment exp))
+	((definition? exp) (analyze-definition exp))
+	((if? exp) (analyze-if exp))
+	((lambda? exp) (analyze-lambda exp))
+      	((begin? exp) (analyze-sequence (begin-actions exp)))
+	((cond? exp) (analyze (cond->if exp)))
+	((let? exp) (analyze (let->combination exp)))
+	((and? exp) (analyze (and->if exp)))
+	((or? exp) (analyze (or->if exp)))
+	((amb? exp) (analyze-amb exp))
+      	((application? exp) (analyze-application exp))
+	(else (error "Unknown expression type: ANALYZE" exp))))
+
+(define count 0)
+(let ((x (an-element-of '(a b c)))
+      (y (an-element-of '(a b c))))
+  (parmanent-set! count (+ count 1))
+  (require (not (eq? x y)))
+  (list x y count))
+;;set!を使うと、バックトラック時に0に戻されるため、表示されるcountは常に1となる
+(let ((x (an-element-of '(a b c)))
+      (y (an-element-of '(a b c))))
+  (set! count (+ count 1))
+  (require (not (eq? x y)))
+  (list x y count))
