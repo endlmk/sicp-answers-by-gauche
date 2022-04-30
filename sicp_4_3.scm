@@ -561,7 +561,7 @@
 	(vproc (analyze (assignment-value exp))))
     (lambda (env succeed fail)
       (vproc env
-	     (lambda (val fail2) ;;失敗時に代入を取り消すため、古い値の代入を失敗継続に差し込んだ成功継続とする
+	     (lambda (val fail2)
 	       (set-variable-value! var val env)
 	       (succeed 'ok fail2))
 	     fail))))
@@ -597,3 +597,79 @@
   (set! count (+ count 1))
   (require (not (eq? x y)))
   (list x y count))
+
+;;ex4.52
+(define (if-fail? exp) (tagged-list? exp 'if-fail))
+(define (analyze-if-fail exp)
+  (let ((try-proc (analyze (cadr exp)))
+	(fail-proc (analyze (caddr exp))))
+    (lambda (env succeed fail)
+      (try-proc env
+		succeed
+		(lambda ()
+		  (fail-proc env
+			     (lambda (val fail2)
+			       (succeed val fail2))
+			     fail))))))
+(define (analyze exp)
+  (cond ((self-evaluating? exp) (analyze-self-evaluating exp))
+	((quoted? exp) (analyze-quoted exp))
+      	((variable? exp) (analyze-variable exp))
+	((assignment? exp) (analyze-assignment exp))
+	((parmanent-assignment? exp) (analyze-parmanent-assignment exp))
+	((definition? exp) (analyze-definition exp))
+	((if? exp) (analyze-if exp))
+	((if-fail? exp) (analyze-if-fail exp))
+	((lambda? exp) (analyze-lambda exp))
+      	((begin? exp) (analyze-sequence (begin-actions exp)))
+	((cond? exp) (analyze (cond->if exp)))
+	((let? exp) (analyze (let->combination exp)))
+	((and? exp) (analyze (and->if exp)))
+	((or? exp) (analyze (or->if exp)))
+	((amb? exp) (analyze-amb exp))
+      	((application? exp) (analyze-application exp))
+	(else (error "Unknown expression type: ANALYZE" exp))))
+
+(if-fail (let ((x (an-element-of '(1 3 5))))
+	   (require (even? x))
+	   x)
+	 'all-odd)
+
+;;ex4.53
+;;prime-sum-pairが成功した際のペアがpairsにconsされたものが取り消されない代入で設定される
+;;次に(amb)で失敗するので次の成功するペアを探す
+;;これらを繰り化し、最終的に失敗時にpairsを返す
+;;よって、結果はprime-sum-pairsで得られるペアのリストとなる
+
+;;ex4.54
+(define (require? exp) (tagged-list? exp 'require))
+(define (require-predicate exp) (cadr exp))
+(define (analyze-require exp)
+  (let ((pproc (analyze (require-predicate exp))))
+    (lambda (env succeed fail)
+      (pproc env
+	     (lambda (pred-value fail2)
+	       (if (false? pred-value)
+		   (fail)
+		   (succeed 'ok fail2)))
+	     fail))))
+
+(define (analyze exp)
+  (cond ((self-evaluating? exp) (analyze-self-evaluating exp))
+	((quoted? exp) (analyze-quoted exp))
+      	((variable? exp) (analyze-variable exp))
+	((assignment? exp) (analyze-assignment exp))
+	((parmanent-assignment? exp) (analyze-parmanent-assignment exp))
+	((definition? exp) (analyze-definition exp))
+	((if? exp) (analyze-if exp))
+	((if-fail? exp) (analyze-if-fail exp))
+	((lambda? exp) (analyze-lambda exp))
+      	((begin? exp) (analyze-sequence (begin-actions exp)))
+	((cond? exp) (analyze (cond->if exp)))
+	((let? exp) (analyze (let->combination exp)))
+	((and? exp) (analyze (and->if exp)))
+	((or? exp) (analyze (or->if exp)))
+	((amb? exp) (analyze-amb exp))
+	((require? exp) (analyze-require exp))
+      	((application? exp) (analyze-application exp))
+	(else (error "Unknown expression type: ANALYZE" exp))))
