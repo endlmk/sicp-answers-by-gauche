@@ -86,3 +86,17 @@
 
 ;;ex4.65
 ;;Warbucksがsupervisorであるという表明が4つあり、それらに対応する結果をすべて出力してしまうため。
+
+;;ex.4.66
+;;4.65のように重複のある結果を返すケースでは、正しい集積結果が得られない
+;;重複のある結果を重複のない一意の要素だけがある結果にする処理があればよい。
+
+;;ex4.67
+
+
+;;ex4.68
+(rule (reverse () ()))
+(rule (reverse (?u . ?v) ?reversed)
+     (and (reverse ?v ?prereversed)
+          (append-to-form ?prereversed (?u) ?reversed)))
+;;(reverse ?x (1 2 3))では第一引数が未束縛のままreverseを再帰的に呼び出すため無限ループする
