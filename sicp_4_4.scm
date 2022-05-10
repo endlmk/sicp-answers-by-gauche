@@ -100,3 +100,9 @@
      (and (reverse ?v ?prereversed)
           (append-to-form ?prereversed (?u) ?reversed)))
 ;;(reverse ?x (1 2 3))では第一引数が未束縛のままreverseを再帰的に呼び出すため無限ループする
+
+;;ex4.70
+;;以下のように実装すると、THE-ASSERTIONSは、assertionを無限に返す無限ストリームとなってしまう。
+(set! THE-ASSERTONS
+      (cons-stream assertion THE-ASSERTIONS))
+;;一度局所変数に入れることでストリームへのconsを実現している
