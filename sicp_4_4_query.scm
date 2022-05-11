@@ -1,3 +1,66 @@
+;;from gauche compat sicp
+(define extend #f)
+
+;;from chap2
+(define *op-table* (make-hash-table 'equal?))
+(define (put op type proc)
+  (hash-table-put! *op-table* (list op type) proc))
+(define (get op type)
+  (hash-table-get *op-table* (list op type) #f))
+
+;;from chap3
+(define the-empty-stream ())
+(define (stream-null? s) (null? s)) 
+(define-syntax cons-stream
+  (syntax-rules ()
+    [(_ a d) (cons a (delay d))]))
+(define (stream-car stream) (car stream))
+(define (stream-cdr stream) (force (cdr stream)))
+(define (stream-ref s n)
+  (if (= n 0)
+      (stream-car s)
+      (stream-ref (stream-cdr s) (- n 1))))
+(define (stream-map proc s)
+  (if (stream-null? s)
+      the-empty-stream
+      (cons-stream (proc (stream-car s)) (stream-map proc (stream-cdr s)))))
+(define (stream-for-each proc s)
+  (if (stream-null? s)
+      'done
+      (begin (proc (stream-car s))
+	     (stream-for-each proc (stream-cdr s)))))
+(define (display-stream s)
+  (stream-for-each display-line s))
+(define (display-line x) (newline) (display x))
+(define (stream-enumerate-interval low high)
+  (if (> low high)
+      the-empty-stream
+      (cons-stream low (stream-enumerate-interval (+ low 1) high))))
+(define (stream-filter pred stream)
+  (cond ((stream-null? stream) the-empty-stream)
+	((pred (stream-car stream)) (cons-stream (stream-car stream) (stream-filter pred (stream-cdr stream))))
+	(else (stream-filter pred (stream-cdr stream)))))
+(define (stream-head s n)
+  (define (iter s n)
+    (if (= n 0)
+	'done
+	(begin
+	  (display (stream-car s))
+	  (newline)
+	  (iter (stream-cdr s) (- n 1)))))
+  (iter s n))
+(define (stream-append s1 s2)
+  (if (stream-null? s1)
+      s2
+      (cons-stream (stream-car s1)
+		   (stream-append (stream-cdr s1) s2))))
+
+;;from chap4
+(define (tagged-list? exp tag)
+  (if (pair? exp)
+      (eq? (car exp) tag)
+      #f))
+
 (define input-prompt ";;; Query input:")
 (define output-prompt ";;; Query results:")
 
@@ -9,7 +72,7 @@
   (let ((q (query-syntax-process (read))))
     (cond ((assertion-to-be-added? q)
 	   (add-rule-or-assertion! (add-assertion-body q))
-	   (new-line)
+	   (newline)
 	   (display "Assertion added to data base.")
 	   (query-driver-loop))
 	  (else
@@ -55,8 +118,8 @@
 (define (conjoin conjuncts frame-stream)
   (if (empty-conjunction? conjuncts)
       frame-stream
-      (conjoin (rest-conjunction conjuncts)
-	       (qeval (first-conjuncts conjuncts) frame-stream))))
+      (conjoin (rest-conjuncts conjuncts)
+	       (qeval (first-conjunct conjuncts) frame-stream))))
 (put 'and 'qeval conjoin)
 ;;or
 (define (disjoin disjuncts frame-stream)
@@ -190,7 +253,7 @@
 (define THE-ASSERTIONS the-empty-stream)
 (define (fetch-assertions pattern frame)
   (if (use-index? pattern)
-      (get-indexed-assertion pattern)
+      (get-indexed-assertions pattern)
       (get-all-assertions)))
 (define (get-all-assertions) THE-ASSERTIONS)
 (define (get-indexed-assertions pattern)
@@ -229,7 +292,7 @@
   (if (indexable? assertion)
       (let ((key (index-key-of assertion)))
 	(let ((current-assertion-stream
-	       (get-stream key 'assertion-streama)))
+	       (get-stream key 'assertion-stream)))
 	  (put key
 	       'assertion-stream
 	       (cons-stream
@@ -284,14 +347,74 @@
   (if (pair? exp)
       (car exp)
       (error "Unknown expression TYPE" exp)))
+(define (contents exp)
+  (if (pair? exp)
+      (cdr exp)
+      (error "Unknown expression CONTENTS" exp)))
 
-	     
-	       
+(define (assertion-to-be-added? exp)
+  (eq? (type exp) 'assert!))
+(define (add-assertion-body exp) (car (contents exp)))
 
-					
-	     
-	    
+(define (empty-conjunction? exps) (null? exps))
+(define (first-conjunct exps) (car exps))
+(define (rest-conjuncts exps) (cdr exps))
+(define (empty-disjunction? exps) (null? exps))
+(define (first-disjunct exps) (car exps))
+(define (rest-disjuncts exps) (cdr exps))
+(define (negated-query exps) (car exps))
+(define (predicate exps) (car exps))
+(define (args exps) (cdr exps))
 
+(define (rule? statement)
+  (tagged-list? statement 'rule))
+(define (conclusion rule) (cadr rule))
+(define (rule-body rule)
+  (if (null? (cddr rule)) '(always-true) (caddr rule)))
+
+(define (query-syntax-process exp)
+  (map-over-symbols expand-question-mark exp))
+(define (map-over-symbols proc exp)
+  (cond ((pair? exp)
+	 (cons (map-over-symbols proc (car exp))
+	       (map-over-symbols proc (cdr exp))))
+	((symbol? exp) (proc exp))
+	(else exp)))
+(define (expand-question-mark symbol)
+  (let ((chars (symbol->string symbol)))
+    (if (string=? (substring chars 0 1) "?")
+	(list '?
+	      (string->symbol
+	       (substring chars 1 (string-length chars))))
+	symbol)))
+(define (var? exp) (tagged-list? exp '?))
+(define (constant-symbol? exp) (symbol? exp))
+
+(define rule-counter 0)
+(define (new-rule-application-id)
+  (set! rule-counter (+ 1 rule-counter))
+  rule-counter)
+(define (make-new-variable var rule-application-id)
+  (cons '? (cons rule-application-id (cdr var))))
+
+(define (contract-question-mark variable)
+  (string->symbol
+   (string-append "?"
+		  (if (number? (cadr variable))
+		      (string-append (symbol->string (caddr variable))
+				     "-"
+				     (number->string (cadr variable)))
+		      (symbol->string (cadr variable))))))
+;;4.4.4.8
+(define (make-binding variable value)
+  (cons variable value))
+(define (binding-variable binding) (car binding))
+(define (binding-value binding) (cdr binding))
+(define (binding-in-frame variable frame)
+  (assoc variable frame))
+(define (extend variable value frame)
+  (cons (make-binding variable value) frame))
+       
 				      
 	   
 		 
