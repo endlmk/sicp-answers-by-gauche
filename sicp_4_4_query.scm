@@ -1,5 +1,7 @@
 ;;from gauche compat sicp
 (define extend #f)
+;; Section 4.1.5
+(define user-initial-environment (interaction-environment))
 
 ;;from chap2
 (define *op-table* (make-hash-table 'equal?))
@@ -134,7 +136,7 @@
   (stream-flatmap
    (lambda (frame)
      (if (stream-null?
-	  (qeval (negate-query operands)
+	  (qeval (negated-query operands)
 		 (singleton-stream frame)))
 	 (singleton-stream frame)
 	 the-empty-stream))
@@ -204,7 +206,7 @@
     (define (tree-walk exp)
       (cond ((var? exp)
 	     (make-new-variable exp rule-application-id))
-	    ((pari? exp)
+	    ((pair? exp)
 	     (cons (tree-walk (car exp))
 		   (tree-walk (cdr exp))))
 	    (else exp)))
@@ -233,7 +235,7 @@
 		 (extend var val frame))))
 	  ((depends-on? val var frame)
 	   'failed)
-	  (else (extend var val frmae)))))
+	  (else (extend var val frame)))))
 (define (depends-on? exp var frame)
   (define (tree-walk e)
     (cond ((var? e)
@@ -262,12 +264,12 @@
   (let ((s (get key1 key2)))
     (if s s the-empty-stream)))
 
-(define THE-RULE the-empty-stream)
+(define THE-RULES the-empty-stream)
 (define (fetch-rules pattern frame)
   (if (use-index? pattern)
       (get-indexed-rules pattern)
       (get-all-rules)))
-(define (get-all-rules) THE-RULE)
+(define (get-all-rules) THE-RULES)
 (define (get-indexed-rules pattern)
   (stream-append
    (get-stream (index-key-of pattern) 'rule-stream)
@@ -283,7 +285,7 @@
     (set! THE-ASSERTIONS
 	  (cons-stream assertion old-assertions))
     'ok))
-(define (add-rules! assertion)
+(define (add-rule! rule)
   (store-rule-in-index rule)
   (let ((old-rules THE-RULES))
     (set! THE-RULES (cons-stream rule old-rules))
@@ -299,7 +301,7 @@
 		assertion
 		current-assertion-stream))))))
 (define (store-rule-in-index rule)
-  (let ((pattern (conculusion rule)))
+  (let ((pattern (conclusion rule)))
     (if (indexable? pattern)
 	(let ((key (index-key-of pattern)))
 	  (let ((current-rule-stream

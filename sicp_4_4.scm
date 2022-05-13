@@ -1,5 +1,5 @@
 ;;database
-(assert! (address (Bitdiddle Ben) (slumerville (Ridge Road) 10)))
+(assert! (address (Bitdiddle Ben) (Slumerville (Ridge Road) 10)))
 (assert! (job (Bitdiddle Ben) (computer wizard)))
 (assert! (salary (Bitdiddle Ben) 60000))
 (assert! (supervisor (Bitdiddle Ben) (Warbucks Oliver)))
@@ -12,7 +12,7 @@
 (assert! (address (Fect Cy D) (Cambridge (Ames Street) 3)))
 (assert! (job (Fect Cy D) (computer programmer)))
 (assert! (salary (Fect Cy D) 35000))
-(assert! (supervisor Fect Cy D) (Bitdiddle Ben))
+(assert! (supervisor (Fect Cy D) (Bitdiddle Ben)))
 
 (assert! (address (Tweakit Lem E) (Boston (Bay State Road) 22)))
 (assert! (job (Tweakit Lem E) (computer technician)))
@@ -43,6 +43,11 @@
 (assert! (salary (Aull DeWitt) 25000))
 (assert! (supervisor (Aull DeWitt) (Warbucks Oliver)))
 
+(assert! (can-do-job (computer wizard) (computer programmer)))
+(assert! (can-do-job (computer wizard) (computer technician)))
+(assert! (can-do-job (computer programmer) (computer programmer trainee)))
+(assert! (can-do-job (administration secretary) (administration big wheel))) 
+
 ;;ex4.55
 ;;1
 (supervisor ?x (Bitdiddle Ben))
@@ -54,34 +59,49 @@
 ;;ex4.56
 ;;1
 (and (supervisor ?person (Bitdiddle Ben))
-     (address ?person ?where)
+     (address ?person ?where))
 ;;2
 (and (salary (Bitdiddle Ben) ?amount-ben)
      (salary ?person ?amount)
      (lisp-value < ?amount ?amount-ben))
 ;;3
-(and (not (job ?boss (conputer . ?type)))
-     (supervisor ?person ?boss))
+(and (supervisor ?person ?boss)
+     (not (job ?boss (computer . ?type)))
+     (job ?boss ?job))
+
+(assert! (rule (lives-near ?p1 ?p2)
+	       (and (address ?p1 (?town . ?rest1))
+		    (address ?p2 (?town . ?rest2))
+		    (not (same ?p1 ?p2)))))
+(assert! (rule (same ?x ?x)))
+ 
+(assert! (rule (wheel ?person)
+	       (and (supervisor ?middle-manager ?person)
+		    (supervisor ?x ?middle-manager))))
 
 ;;ex4.57
-(rule (replace ?person ?person2)
-      (and (job ?person ?job)
-           (or (job ?person2 ?job)
-               (and (can-do-job ?job ?job2)
-                    (job ?person2 ?job2)))
-           (not (same ?person ?person2))))
+(assert! (rule (replace ?person-1 ?person-2)
+	       (and
+		(or (and (job ?person-1 ?job)
+			 (job ?person-2 ?job))
+		    (and (job ?person-1 ?job-1)
+			 (job ?person-2 ?job-2)
+			 (can-do-job ?job-1 ?job-2)))
+		(not (same ?person-1 ?person-2)))))
 ;;1
-(replace (Fect Cy D) ?p)
+(replace ?p (Fect Cy D))
 ;;2
 (and (replace ?p1 ?p2)
-     (salary ?p1 ?saraly1)
+     (salary ?p1 ?salary1)
      (salary ?p2 ?salary2)
-     (lisp-value ?salary1 < ?salary2))
+     (lisp-value < ?salary1 ?salary2))
 
 ;;ex4.58
 (rule (big-shot ?person)
-     (and (supervisor ?person . ?boss)
-          (lisp-value null? ?boss)))
+     (and (job (Fect Cy D) (?dept . ?rest))
+          (job ?boss (?dept . ?rest2))
+          (supervisor ?boss ?p)
+	     (not (job ?p (?dept . ?rest3)))))
 
 ;;ex4.59
 ;;a
