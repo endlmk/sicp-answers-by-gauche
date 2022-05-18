@@ -104,14 +104,20 @@
 	     (not (job ?p (?dept . ?rest3)))))
 
 ;;ex4.59
+(assert! (meeting accounting (Monday 9am)))
+(assert! (meeting administration (Monday 10am)))
+(assert! (meeting computer (Wednesday 3pm)))
+(assert! (meeting administration (Friday 1pm)))
+(assert! (meeting whole-company (Wednesday 4pm)))
+
 ;;a
-(and (meeting ?job ?datetime)
-     (job ?person (?job . ?type))
-     (same ?person (Ben Bitdiddle)))
+(meeting ?job (Friday . ?time))
+
 ;;b
 (rule (meeting-time ?person ?day-and-times)
-      (and (meeting ?job ?day-and-time)
-           (job ?person (?job . ?type)))
+      (or (and (meeting ?job ?day-and-time)
+	       (job ?person (?job . ?type)))
+	  (meeting whole-company ?day-and-time)))
 ;;c
 (meeting-time (Hacker Alyssa P) (Wednesday . ?time))
 
@@ -119,8 +125,14 @@
 ;;DBの各レコードに対してクエリが一致するか適用する。
 ;;そのため、順序が入れ替わった場合でもクエリの条件を満たすことになるため
 ;;person1とperson2を順序づけるようにすればよい
+(define (person->string p)
+  (if (null? p)
+      ""
+      (string-append (symbol->string (car p)) (person->string (cdr p)))))
+(define (person<? a b)
+  (string<? (person->string a) (person->string b)))
 (and (lives-near ?person1 ?person2)
-     (lisp-value compare ?person1 ?person2))
+     (lisp-value person<? ?person1 ?person2))
 
 ;;ex4.61
 (?x next-to ?y in (1 (2 3) 4))
@@ -131,20 +143,29 @@
 (3 next-to 1 in (2 1 3 1))
 
 ;;ex4.62
-(rule (last-pair (?x. ()) (?x))
-(rule (last-pair (?x . ?v))
-      (last-pair ?v))
+(assert! (rule (last-pair (?x . ()) (?x))))
+(assert! (rule (last-pair (?x . ?v) ?l)
+	       (last-pair ?v ?l)))
 ;;(last-pair ?x (3))に対しては(last-pair (3) (3))しか返らない。
 ;;最後が3で他が任意の要素であるリストが条件を満たすが、クエリからは(3)しか得られない。
 
 ;;ex4.63
-(rule (grand-child ?p ?c)
-     (and (son-of-parent ?p ?p1)
-          (son-of-parent ?p1 ?c)))
-(rule (son-of-parent ?p ?c)
-     (or (son ?p ?c)
-         (and (wife ?p ?w)
-              (son ?w ?c))))
+(assert! (son Adam Cain))
+(assert! (son Cain Enoch))
+(assert! (son Enoch Irad))
+(assert! (son Irad Mehujael))
+(assert! (son Mehujael Methushael))
+(assert! (son Methushael Lamech))
+(assert! (wife Lamech Ada))
+(assert! (son Ada Jabal))
+(assert! (son Ada Jubal))
+
+(assert! (rule (grand-son ?g ?s)
+	       (and (son ?g ?f)
+		    (son ?f ?s))))
+(assert! (rule (son ?m ?s)
+	       (and (wife ?m ?w)
+		    (son ?w ?s))))
 
 ;;ex4.64
 ;;outranked-byがorで結合され、一方のクエリの最初に再帰的に評価するように書かれているので、無限ループする
