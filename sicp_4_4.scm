@@ -160,7 +160,7 @@
 (assert! (son Ada Jabal))
 (assert! (son Ada Jubal))
 
-(assert! (rule (grand-son ?g ?s)
+(assert! (rule (grandson ?g ?s)
 	       (and (son ?g ?f)
 		    (son ?f ?s))))
 (assert! (rule (son ?m ?s)
@@ -178,14 +178,69 @@
 ;;重複のある結果を重複のない一意の要素だけがある結果にする処理があればよい。
 
 ;;ex4.67
+(define history 'dummy)
 
+(define (query-driver-loop)
+  (set! history 'dummy)
+  (prompt-for-input input-prompt)
+  (let ((q (query-syntax-process (read))))
+    (cond ((assertion-to-be-added? q)
+	   (add-rule-or-assertion! (add-assertion-body q))
+	   (newline)
+	   (display "Assertion added to data base.")
+	   (query-driver-loop))
+	  (else
+	   (newline)
+	   (display output-prompt)
+	   (display-stream
+	    (stream-map
+	     (lambda (frame)
+	       (instantiate
+		q
+		frame
+		(lambda (v f)
+		  (contract-question-mark v))))
+	     (qeval q (singleton-stream ()))))
+	   (query-driver-loop)))))
+
+(define (apply-a-rule rule query-pattern query-frame)
+  (let ((clean-rule (rename-variables-in rule)))
+    (let ((unify-result (unify-match query-pattern
+				     (conclusion clean-rule)
+				     query-frame)))
+      (if (eq? unify-result 'failed)
+	  the-empty-stream
+	  (if (eq? history (conclusion rule))
+	      the-empty-stream
+	      (begin (set! history (conclusion rule))
+		     (qeval (rule-body clean-rule)
+			    (singleton-stream unify-result))))))))
+
+(assert! (rule (outranked-by ?staff-person ?boss)
+	       (or (supervisor ?staff-person ?boss)
+		   (and (outranked-by ?middle-manager ?boss)
+			(supervisor ?staff-person ?middle-manager)))))
 
 ;;ex4.68
-(rule (reverse () ()))
-(rule (reverse (?u . ?v) ?reversed)
-     (and (reverse ?v ?prereversed)
-          (append-to-form ?prereversed (?u) ?reversed)))
+(assert! (rule (append-to-form () ?y ?y)))
+(assert! (rule (append-to-form (?u . ?v) ?y (?u . ?z))
+	       (append-to-form ?v ?y ?z)))
+
+(assert! (rule (reverse () ())))
+(assert! (rule (reverse (?u . ?v) ?reversed)
+	       (and (reverse ?v ?prereversed)
+		    (append-to-form ?prereversed (?u) ?reversed))))
 ;;(reverse ?x (1 2 3))では第一引数が未束縛のままreverseを再帰的に呼び出すため無限ループする
+
+;;ex4.69
+(assert! (rule (grandson-end ?x)
+	       (append-to-form ?u (grandson) ?x)))
+(assert! (rule ((grandson) ?x ?y)
+	       (grandson ?x ?y)))
+(assert! (rule ((great . ?rel) ?x ?y)
+	       (and (son ?z ?y)
+		    (?rel ?x ?z)
+		    (grandson-end ?rel))))
 
 ;;ex4.70
 ;;以下のように実装すると、THE-ASSERTIONSは、assertionを無限に返す無限ストリームとなってしまう。
