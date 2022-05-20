@@ -248,3 +248,78 @@
       (cons-stream assertion THE-ASSERTIONS))
 ;;一度局所変数に入れることでストリームへのconsを実現している
 
+;;ex4.71
+(assert! (married Minnie Mickey))
+(assert! (rule (married ?x ?y)
+	       (married ?y ?x)))
+(married Mickey ?who)
+;;non-delayed
+(define (simple-query query-pattern frame-stream)
+  (stream-flatmap
+   (lambda (frame)
+     (stream-append
+      (find-assertions query-pattern frame)
+      (apply-rules query-pattern frame)))
+   frame-stream))
+;;遅延しないバージョンでは、marriedのクエリでsimple-query内で無限ループするため、何も表示されずに応答がなくなる。
+;;遅延するバージョンでは、marriedのクエリで表示が無限にされ続ける。
+
+;;ex4.72
+;;1つ目のストリームが無限ストリームの場合、相互配置でないと1つ目のストリームからしか値を取り出さないことになる。
+;;interleaveすることで、1つ目のストリームが無限ストリームでも2つのストリームから交互に値を取り出すようになる。
+
+;;ex4.73
+;;無限ストリームの場合、delayがないとflatten-streamで無限にループし、何も表示されず応答がなくなる。
+
+;;ex4.74
+;;a
+(define (simple-stream-flatmap proc s)
+  (simple-flatten (stream-map proc s)))
+(define (simple-flatten stream)
+  (steam-map stream-car
+	     (stream-filter (lambda (s) (not (stream-null? s))) stream)))
+;;b
+;;振る舞いに影響はない。flatten-streamと同様に遅延ストリームとなる。
+
+;;ex4.75
+(define (uniquely-asserted operands frame-stream)
+  (stream-flatmap
+   (lambda (frame)
+     (let ((result (qeval (car operands) (singleton-stream frame))))
+       (if (and (not (stream-null? result))
+		(stream-null? (stream-cdr result)))
+	   result
+	   the-empty-stream)))
+   frame-stream))
+(put 'unique 'qeval uniquely-asserted)
+
+;;ex4.76
+(define (conjoin conjuncts frame-stream)
+  (if (empty-conjunction? conjuncts)
+      frame-stream
+      (merge-frame-stream
+       (qeval (first-conjunct conjuncts) frame-stream)
+       (conjoin (rest-conjuncts conjuncts) frame-stream))))
+(define (merge-frame-stream s1 s2)
+  (stream-flatmap (lambda (f1)
+		    (stream-filter
+		     (lambda (f) (not (equal? f 'failed)))
+		     (stream-map
+		      (lambda (f2) (merge-frames f1 f2))
+		      s2)))
+		  s1))
+(define (merge-frames f1 f2)
+  (if (null? f1)
+      f2
+      (let ((var (caar f1))
+	    (val (cdar f1)))
+	(let ((extension (extend-if-possible var val f2)))
+	  (if (equal? extension 'failed)
+	      'failed
+	      (merge-frames (cdr f1) extension))))))
+(put 'and 'qeval conjoin)		 
+
+;;skip			  
+;;4.77
+;;4.78
+;;4.79
