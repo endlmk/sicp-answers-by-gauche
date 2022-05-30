@@ -49,6 +49,9 @@
  (restore continue)
  (assign val (op *) (reg b) (reg val))
  (goto (reg continue))
+ base-case
+ (assign val (const 1))
+ (goto (reg continue))
  expt-done)
 
 (controller
