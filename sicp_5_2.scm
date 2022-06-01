@@ -73,3 +73,30 @@
 		 (recieve (cons (make-instruction next-inst)
 				insts)
 			  labels)))))))
+;;ex5.9
+(define (make-operation-exp exp machine labels operations)
+  (let ((op (lookup-prim (operation-exp-op exp)
+			 operations))
+	(aprocs
+	 (map (lambda (e)
+		(if (label-exp? e)
+		    (error "Invalid operation to label: ASSEMBLE" e)
+		    (make-primitive-exp e machine labels)))
+	      (operation-exp-operands exp))))
+    (lambda ()
+      (apply op (map (lambda (p) (p)) aprocs)))))
+
+;;ex5.10
+;;適切な構文が思い浮かばないのでパス
+;;make-execution-procedureに追加すれば他の処理は変更しなくてよい
+
+;;ex5.11
+;;a
+;; (assign n (reg val)) n=val=Fib(n-2)
+;; (restore val) n=Fib(n-2) val=Fib(n-1)
+;;...
+;; (assign val (op +) (reg val) (reg n)) Fib(n-1)+Fib(n-2)
+;;以下に変更可能、nとvalが入れ替わるが加算の結果は変わらない
+;; (restore n) n=Fib(n-1) val=Fib(n-2)
+;; (assign val (op +) (reg val) (reg n)) Fib(n-1)+Fib(n-2)
+
