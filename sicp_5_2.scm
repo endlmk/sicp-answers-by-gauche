@@ -100,3 +100,108 @@
 ;; (restore n) n=Fib(n-1) val=Fib(n-2)
 ;; (assign val (op +) (reg val) (reg n)) Fib(n-1)+Fib(n-2)
 
+;;b
+(define (make-save inst machine stack pc)
+  (let ((reg (get-register machine (stack-inst-reg-name inst))))
+    (lambda ()
+      (push stack (cons (stack-inst-reg-name inst) (get-contents reg)))
+      (advance-pc pc))))
+(define (make-restore inst machine stack pc)
+  (let ((reg (get-register machine (stack-inst-reg-name inst))))
+    (lambda ()
+      (let ((reg-name-val-pair (pop stack)))
+	(if (eq? (car reg-name-val-pair) (stack-inst-reg-name inst))
+	    (begin (set-contents! reg (cdr reg-name-val-pair))
+		   (advance-pc pc))
+	    (error "Different register name: ASSEMBLE" inst))))))
+;;c
+(define (make-machine register-names ops controller-text)
+  (let ((machine (make-new-machine)))
+    (for-each
+     (lambda (register-name)
+       ((machine 'allocate-register) register-name)
+       ((machine 'allocate-stack) register-name)) ;;mod
+     register-names)
+    ((machine 'install-operations) ops)
+    ((machine 'install-instruction-sequence)
+     (assemble controller-text machine))
+    machine))
+
+(define (make-new-machine)
+  (let ((pc (make-register 'pc))
+	(flag (make-register 'flag))
+	(stack ()) ;;mod
+	(the-instruction-sequence ()))
+    (let ((the-ops
+	   (list (list 'initialize-stack ;;mod
+		       (lambda () (map ;;mod
+				   (lambda (reg-stack-pair) ((cadr reg-stack-pair) 'initialize)) ;;mod
+				   stack))))) ;;mod
+	  (register-table
+	   (list (list 'pc pc) (list 'flag flag))))
+      (define (allocate-register name)
+	(if (assoc name register-table)
+	    (error "Multiply defined register: " name)
+	    (set! register-table
+		  (cons (list name (make-register name))
+			register-table)))
+	'register-allocated)
+      (define (lookup-register name)
+	(let ((val (assoc name register-table)))
+	  (if val
+	      (cadr val)
+	      (error "Unknown register:" name))))
+      (define (execute)
+	(let ((insts (get-contents pc)))
+	  (if (null? insts)
+	      'done
+	      (begin
+		((instruction-execution-proc (car insts)))
+		(execute)))))
+      (define (allocate-stack name) ;;mod
+	(if (assoc name stack)
+	    (error "Multiply defined register: " name)
+	    (set! stack
+		  (cons (list name (make-stack))
+			stack)))
+	'stack-allocated)
+      (define (dispatch message)
+	(cond ((eq? message 'start)
+	       (set-contents! pc the-instruction-sequence)
+	       (execute))
+	      ((eq? message 'install-instruction-sequence)
+	       (lambda (seq)
+		 (set! the-instruction-sequence seq)))
+	      ((eq? message 'allocate-register)
+	       allocate-register)
+	      ((eq? message 'get-register)
+	       lookup-register)
+	      ((eq? message 'install-operations)
+	       (lambda (ops)
+		 (set! the-ops (append the-ops ops))))
+	      ((eq? message 'stack) stack)
+	      ((eq? message 'operations) the-ops)
+	      ((eq? message 'allocate-stack)
+	       allocate-stack)
+	      (else (error "Unknown request: Machine" message))))
+      dispatch)))
+
+(define (make-save inst machine reg-stack pc)
+  (let ((reg-name (stack-inst-reg-name inst)))
+    (let ((reg (get-register machine reg-name))
+	  (reg-stack-list (assoc reg-name reg-stack)))
+      (if reg-stack-list
+	  (lambda ()
+	    (push (cadr reg-stack-list) (get-contents reg))
+	    (advance-pc pc))
+	  (error "Unknown reg-stack: ASSEMBLE" inst)))))
+(define (make-restore inst machine reg-stack pc)
+  (let ((reg-name (stack-inst-reg-name inst)))
+    (let ((reg (get-register machine reg-name))
+	  (reg-stack-list (assoc reg-name reg-stack)))
+      (if reg-stack-list
+	  (lambda ()
+	    (set-contents! reg (cadr reg-stack-list))
+	    (advance-pc pc))
+	  (error "Unknown reg-stack: ASSEMBLE" stack)))))
+	    
