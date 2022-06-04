@@ -205,3 +205,186 @@
 	    (advance-pc pc))
 	  (error "Unknown reg-stack: ASSEMBLE" stack)))))
 	    
+;;ex5.12
+(define (make-machine register-names ops controller-text)
+  (let ((machine (make-new-machine)))
+    (for-each
+     (lambda (register-name)
+       ((machine 'allocate-register) register-name))
+     register-names)
+    ((machine 'install-operations) ops)
+    (machine 'init-analyze-seq) ;;mod
+    ((machine 'install-instruction-sequence)
+     (assemble controller-text machine))
+    machine))
+(define (make-new-machine)
+  (let ((pc (make-register 'pc))
+	(flag (make-register 'flag))
+	(stack (make-stack))
+	(analyze-sequence ()) ;;mod
+	(the-instruction-sequence ()))
+    (let ((the-ops
+	   (list (list 'initialize-stack
+		       (lambda () (stack 'initialize)))))
+	  (register-table
+	   (list (list 'pc pc) (list 'flag flag))))
+      (define (allocate-register name)
+	(if (assoc name register-table)
+	    (error "Multiply defined register: " name)
+	    (set! register-table
+		  (cons (list name (make-register name))
+			register-table)))
+	'register-allocated)
+      (define (lookup-register name)
+	(let ((val (assoc name register-table)))
+	  (if val
+	      (cadr val)
+	      (error "Unknown register:" name))))
+      (define (execute)
+	(let ((insts (get-contents pc)))
+	  (if (null? insts)
+	      'done
+	      (begin
+		((instruction-execution-proc (car insts)))
+		(execute)))))
+      (define (init-analyze-seq) ;;mod
+	(set! analyze-sequence (map (lambda (x) (list x))
+				    (list 'assign 'test 'branch 'goto 'save 'restore 'perform
+					  'goto-regs 'save-regs 'restore-regs 'source))))
+      (define (dispatch message)
+	(cond ((eq? message 'start)
+	       (set-contents! pc the-instruction-sequence)
+	       (execute))
+	      ((eq? message 'install-instruction-sequence)
+	       (lambda (seq)
+		 (set! the-instruction-sequence seq)))
+	      ((eq? message 'allocate-register)
+	       allocate-register)
+	      ((eq? message 'get-register)
+	       lookup-register)
+	      ((eq? message 'get-analyze-seq) analyze-sequence) ;;mod
+	      ((eq? message 'init-analyze-seq) (init-analyze-seq)) ;;mod
+	      ((eq? message 'install-operations)
+	       (lambda (ops)
+		 (set! the-ops (append the-ops ops))))
+	      ((eq? message 'stack) stack)
+	      ((eq? message 'operations) the-ops)
+	      (else (error "Unknown request: Machine" message))))
+      dispatch)))
+(define (analyze-machine machine)
+  (machine 'get-analyze-seq))
+
+(define (insert-analyze-seq! exp machine type)
+  (let ((record
+	 (cond ((eq? type 'inst) (assoc (car exp) (machine 'get-analyze-seq)))
+	       ((eq? type 'goto) (assoc 'goto-regs (machine 'get-analyze-seq)))
+	       ((eq? type 'save) (assoc 'save-regs (machine 'get-analyze-seq)))
+	       ((eq? type 'restore) (assoc 'restore-regs (machine 'get-analyze-seq)))
+	       ((eq? type 'source) (assoc 'source (machine 'get-analyze-seq))))))
+    (if record
+	(if (eq? type 'source)
+	    (let ((target (assoc (assign-reg-name exp) (cdr record))))
+	      (if target
+		  (if (not (member (assign-value-exp exp) (cdr target)))
+		      (set-cdr! target (cons (assign-value-exp exp) (cdr target))))
+		  (set-cdr! record (cons (list (assign-reg-name exp) (assign-value-exp exp)) (cdr record)))))
+	    (if (not (member exp (cdr record)))
+		(set-cdr! record (cons exp (cdr record)))))
+	(error "Analyze error: " exp))))
+		
+(define (make-assign inst machine labels operations pc)
+  (insert-analyze-seq! inst machine 'inst) ;;mod
+  (insert-analyze-seq! inst machine 'source) ;;mod
+  (let ((target (get-register machine (assign-reg-name inst)))
+	(value-exp (assign-value-exp inst)))
+    (let ((value-proc
+	   (if (operation-exp? value-exp)
+	       (make-operation-exp value-exp machine labels operations)
+	       (make-primitive-exp (car value-exp) machine labels))))
+      (lambda ()
+	(set-contents! target (value-proc))
+	(advance-pc pc)))))
+(define (make-test inst machine labels operations flag pc)
+  (insert-analyze-seq! inst machine 'inst) ;;mod
+  (let ((condition (test-condition inst)))
+    (if (operation-exp? condition)
+	(let ((condition-proc (make-operation-exp condition machine labels operations)))
+	  (lambda ()
+	    (set-contents! flag (condition-proc))
+	    (advance-pc pc)))
+	(error "Bad TEST instruction: ASSEMBLE" inst))))
+(define (make-branch inst machine labels flag pc)
+  (insert-analyze-seq! inst machine 'inst) ;;mod
+  (let ((dest (branch-dest inst)))
+    (if (label-exp? dest)
+	(let ((insts (lookup-label labels (label-exp-label dest))))
+	  (lambda ()
+		  (if (get-contents flag)
+		      (set-contents! pc insts)
+		      (advance-pc pc))))
+	(error "Bad-BRANCH instruction: ASSEMBLE" inst))))
+(define (make-goto inst machine labels pc)
+  (insert-analyze-seq! inst machine 'inst) ;;mod
+  (let ((dest (goto-dest inst)))
+    (cond ((label-exp? dest)
+	   (let ((insts (lookup-label labels (label-exp-label dest))))
+	     (lambda () (set-contents! pc insts))))
+	  ((register-exp? dest)
+	   (insert-analyze-seq! (register-exp-reg dest) machine 'goto) ;;mod
+	   (let ((reg (get-register machine (register-exp-reg dest))))
+	     (lambda () (set-contents! pc (get-contents reg)))))
+	  (else (error "Bad GOTO instruction: ASSEMBLE" inst)))))
+(define (make-save inst machine stack pc)
+  (insert-analyze-seq! inst machine 'inst) ;;mod
+  (insert-analyze-seq! (stack-inst-reg-name inst) machine 'save) ;;mod
+  (let ((reg (get-register machine (stack-inst-reg-name inst))))
+    (lambda ()
+      (push stack (get-contents reg))
+      (advance-pc pc))))
+(define (make-restore inst machine stack pc)
+  (insert-analyze-seq! inst machine 'inst) ;;mod
+  (insert-analyze-seq! (stack-inst-reg-name inst) machine 'restore) ;;mod
+  (let ((reg (get-register machine (stack-inst-reg-name inst))))
+    (lambda ()
+      (set-contents! reg (pop stack))
+      (advance-pc pc))))
+(define (make-perform inst machine labels operations pc)
+  (insert-analyze-seq! inst machine 'inst) ;;mod
+  (let ((action (perform-action inst)))
+    (if (operation-exp? action)
+	(let ((action-proc (make-operation-exp action machine labels operations)))
+	  (lambda () (action-proc) (advance-pc pc)))
+	(error "Bad PERFORM instruction: ASSEMBLE" inst))))
+(define fib-machine
+  (make-machine
+   '(continue val n)
+   (list (list '< <) (list '= =) (list '+ +) (list '- -))
+   '(controller
+     (assign continue (label fib-done))
+     fib-loop
+     (test (op <) (reg n) (const 2))
+     (branch (label immediate-answer))
+     (save continue)
+     (assign continue (label afterfib-n-1))
+     (save n)
+     (assign n (op -) (reg n) (const 1))
+     (goto (label fib-loop))
+     afterfib-n-1
+     (restore n)
+     (restore continue)
+     (assign n (op -) (reg n) (const 2))
+     (save continue)
+     (assign continue (label afterfib-n-2))
+     (save val)
+     (goto (label fib-loop))
+     afterfib-n-2
+     (assign n (reg val))
+     (restore val)
+     (restore continue)
+     (assign val (op +) (reg val) (reg n))
+     (goto (reg continue))
+     immediate-answer
+     (assign val (reg n))
+     (goto (reg continue))
+     fib-done)
+   ))

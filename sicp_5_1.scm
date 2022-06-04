@@ -71,8 +71,8 @@
  (branch (label base-case))
  (save continue)
  (save n)
- (assgin n (op -) (reg n) (const 1))
- (assgin continue (label after-fact))
+ (assign n (op -) (reg n) (const 1))
+ (assign continue (label after-fact))
  (goto (label fact-loop))
  after-fact
  (restore n)
@@ -97,7 +97,7 @@
 ;;fact-done
 
 (controller
- (assgin continue (label fib-done))
+ (assign continue (label fib-done))
  fib-loop
  (test (op <) (reg n) (const 2))
  (branch (label immediate-answer))
