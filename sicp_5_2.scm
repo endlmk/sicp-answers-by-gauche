@@ -355,6 +355,7 @@
 	(let ((action-proc (make-operation-exp action machine labels operations)))
 	  (lambda () (action-proc) (advance-pc pc)))
 	(error "Bad PERFORM instruction: ASSEMBLE" inst))))
+
 (define fib-machine
   (make-machine
    '(continue val n)
@@ -444,3 +445,39 @@
 	      ((eq? message 'operations) the-ops)
 	      (else (error "Unknown request: Machine" message))))
       dispatch)))
+
+;;ex5.14
+(define fact-machine-test
+  (make-machine
+   '(continue val n test-n)
+    (list (list '= =) (list '- -) (list '* *))
+    '(start
+      (assign continue (label fact-done))
+      fact-test-entry
+      (test (op =) (reg test-n) (const 0))
+      (branch (label fact-test-end))
+      (perform (op initialize-stack))
+      (assign n (reg test-n))	    
+      fact-loop
+      (test (op =) (reg n) (const 1))
+      (branch (label base-case))
+      (save continue)
+      (save n)
+      (assign n (op -) (reg n) (const 1))
+      (assign continue (label after-fact))
+      (goto (label fact-loop))
+      after-fact
+      (restore n)
+      (restore continue)
+      (assign val (op *) (reg n) (reg val))
+      (goto (reg continue))
+      base-case
+      (assign val (const 1))
+      (goto (reg continue))
+      fact-done
+      (perform (op print-statistics))
+      (assign test-n (op -) (reg test-n) (const 1))
+      (goto (label fact-test-entry))
+      fact-test-end)
+    ))
+;;total-pushes, maximum-depthともに2*(n-1)となる
