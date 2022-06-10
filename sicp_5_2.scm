@@ -603,3 +603,97 @@
 	      ((eq? message 'trace-off) (set! trace? #f)) ;;mod 
 	      (else (error "Unknown request: Machine" message))))
       dispatch)))
+
+;;ex5.17
+(define (make-new-machine)
+  (let ((pc (make-register 'pc))
+	(flag (make-register 'flag))
+	(stack (make-stack))
+	(the-instruction-sequence ())
+	(instruction-count 0)
+	(trace? #f)
+	(label '*no-label*)) ;;mod
+    (let ((the-ops
+	   (list (list 'initialize-stack
+		       (lambda () (stack 'initialize)))
+		 (list 'print-statistics
+		       (lambda () (stack 'print-statistics)))))
+	  (register-table
+	   (list (list 'pc pc) (list 'flag flag))))
+      (define (allocate-register name)
+	(if (assoc name register-table)
+	    (error "Multiply defined register: " name)
+	    (set! register-table
+		  (cons (list name (make-register name))
+			register-table)))
+	'register-allocated)
+      (define (lookup-register name)
+	(let ((val (assoc name register-table)))
+	  (if val
+	      (cadr val)
+	      (error "Unknown register:" name))))
+      (define (execute)
+	(let ((insts (get-contents pc)))
+	  (if (null? insts)
+	      'done
+	      (begin
+		((instruction-execution-proc (car insts)))
+		(if (eq? (caaar insts) 'label) ;;mod
+		    (set! label (cadaar insts))
+		    (set! instruction-count (+ instruction-count 1)))
+		(if trace? 
+		    (print "label:" label ", instruction:" (instruction-text (car insts)))) ;;mod
+		(execute)))))
+      (define (display-instruction-counting)
+	(newline)
+	(display (list 'instruction-counting instruction-count))
+	(set! instruction-count 0))
+      (define (dispatch message)
+	(cond ((eq? message 'start)
+	       (set-contents! pc the-instruction-sequence)
+	       (execute))
+	      ((eq? message 'install-instruction-sequence)
+	       (lambda (seq)
+		 (set! the-instruction-sequence seq)))
+	      ((eq? message 'allocate-register)
+	       allocate-register)
+	      ((eq? message 'get-register)
+	       lookup-register)
+	      ((eq? message 'install-operations)
+	       (lambda (ops)
+		 (set! the-ops (append the-ops ops))))
+	      ((eq? message 'stack) stack)
+	      ((eq? message 'operations) the-ops)
+	      ((eq? message 'display-instruction-counting) (display-instruction-counting))
+	      ((eq? message 'trace-on) (set! trace? #t))
+	      ((eq? message 'trace-off) (set! trace? #f))
+	      (else (error "Unknown request: Machine" message))))
+      dispatch)))
+
+(define (extract-labels text recieve)
+  (if (null? text)
+      (recieve () ())
+      (extract-labels
+       (cdr text)
+       (lambda (insts labels)
+	 (let ((next-inst (car text)))
+	   (if (symbol? next-inst)
+	       (let ((insts-label (cons (make-instruction (list 'label next-inst)) ;;mod
+					insts)))
+		     (recieve insts-label ;;mod
+			      (cons (make-label-entry next-inst insts-label) ;;mod
+				    labels)))
+	       (recieve (cons (make-instruction next-inst)
+			      insts)
+			labels)))))))
+	   
+(define (make-execution-procedure inst labels machine pc flag stack ops)
+  (cond ((eq? (car inst) 'assign) (make-assign inst machine labels ops pc))
+	((eq? (car inst) 'test) (make-test inst machine labels ops flag pc))
+	((eq? (car inst) 'branch) (make-branch inst machine labels flag pc))
+	((eq? (car inst) 'goto) (make-goto inst machine labels pc))
+	((eq? (car inst) 'save) (make-save inst machine stack pc))
+	((eq? (car inst) 'restore) (make-restore inst machine stack pc))
+	((eq? (car inst) 'perform) (make-perform inst machine labels ops pc))
+	((eq? (car inst) 'label) (lambda () (advance-pc pc))) ;;mod
+	(else (error "Unknown instruction type: ASSEMBLE" inst))))
