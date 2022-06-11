@@ -697,3 +697,189 @@
 	((eq? (car inst) 'perform) (make-perform inst machine labels ops pc))
 	((eq? (car inst) 'label) (lambda () (advance-pc pc))) ;;mod
 	(else (error "Unknown instruction type: ASSEMBLE" inst))))
+
+;;ex5.18
+(define (make-register name)
+  (let ((contents '*unassigned*)
+	(trace? #f))
+    (define (dispatch message)
+      (cond ((eq? message 'get) contents)
+	    ((eq? message 'set)
+	     (lambda (value)
+	       (if trace?
+		   (print "register: " name ", old: " contents ", new: " value))
+	       (set! contents value)))
+	    ((eq? message 'trace-on) (set! trace? #t))
+	    ((eq? message 'trace-off) (set! trace? #f))
+	    (else (error "Unknown request: REGISTER" message))))
+    dispatch))
+
+(define (make-new-machine)
+  (let ((pc (make-register 'pc))
+	(flag (make-register 'flag))
+	(stack (make-stack))
+	(the-instruction-sequence ())
+	(instruction-count 0)
+	(trace? #f)
+	(label '*no-label*))
+    (let ((the-ops
+	   (list (list 'initialize-stack
+		       (lambda () (stack 'initialize)))
+		 (list 'print-statistics
+		       (lambda () (stack 'print-statistics)))))
+	  (register-table
+	   (list (list 'pc pc) (list 'flag flag))))
+      (define (allocate-register name)
+	(if (assoc name register-table)
+	    (error "Multiply defined register: " name)
+	    (set! register-table
+		  (cons (list name (make-register name))
+			register-table)))
+	'register-allocated)
+      (define (lookup-register name)
+	(let ((val (assoc name register-table)))
+	  (if val
+	      (cadr val)
+	      (error "Unknown register:" name))))
+      (define (execute)
+	(let ((insts (get-contents pc)))
+	  (if (null? insts)
+	      'done
+	      (begin
+		((instruction-execution-proc (car insts)))
+		(if (eq? (caaar insts) 'label)
+		    (set! label (cadaar insts))
+		    (set! instruction-count (+ instruction-count 1)))
+		(if trace? 
+		    (print "label:" label ", instruction:" (instruction-text (car insts))))
+		(execute)))))
+      (define (display-instruction-counting)
+	(newline)
+	(display (list 'instruction-counting instruction-count))
+	(set! instruction-count 0))
+      (define (set-reg-trace flag name) ;;mod
+	(let ((reg (lookup-register name)))
+	  (reg (if flag 'trace-on 'trace-off))))		  
+      (define (dispatch message)
+	(cond ((eq? message 'start)
+	       (set-contents! pc the-instruction-sequence)
+	       (execute))
+	      ((eq? message 'install-instruction-sequence)
+	       (lambda (seq)
+		 (set! the-instruction-sequence seq)))
+	      ((eq? message 'allocate-register)
+	       allocate-register)
+	      ((eq? message 'get-register)
+	       lookup-register)
+	      ((eq? message 'install-operations)
+	       (lambda (ops)
+		 (set! the-ops (append the-ops ops))))
+	      ((eq? message 'stack) stack)
+	      ((eq? message 'operations) the-ops)
+	      ((eq? message 'display-instruction-counting) (display-instruction-counting))
+	      ((eq? message 'trace-on) (set! trace? #t))
+	      ((eq? message 'trace-off) (set! trace? #f))
+	      ((eq? message 'reg-trace-on) (lambda (name) (set-reg-trace #t name))) ;;mod
+	      ((eq? message 'reg-trace-off) (lambda (name) (set-reg-trace #f name))) ;;mod
+	      (else (error "Unknown request: Machine" message))))
+      dispatch)))
+
+;;ex5.19
+(define (make-new-machine)
+  (let ((pc (make-register 'pc))
+	(flag (make-register 'flag))
+	(stack (make-stack))
+	(the-instruction-sequence ())
+	(instruction-count 0)
+	(trace? #f)
+	(label '*no-label*)
+	(count-from-label 0) ;;mod
+	(breakpoints ())) ;;mod
+    (let ((the-ops
+	   (list (list 'initialize-stack
+		       (lambda () (stack 'initialize)))
+		 (list 'print-statistics
+		       (lambda () (stack 'print-statistics)))))
+	  (register-table
+	   (list (list 'pc pc) (list 'flag flag))))
+      (define (allocate-register name)
+	(if (assoc name register-table)
+	    (error "Multiply defined register: " name)
+	    (set! register-table
+		  (cons (list name (make-register name))
+			register-table)))
+	'register-allocated)
+      (define (lookup-register name)
+	(let ((val (assoc name register-table)))
+	  (if val
+	      (cadr val)
+	      (error "Unknown register:" name))))
+      (define (execute)
+	(let ((insts (get-contents pc)))
+	  (if (null? insts)
+	      'done
+	      (begin
+		((instruction-execution-proc (car insts)))
+		(if (eq? (caaar insts) 'label)
+		    (begin (set! label (cadaar insts))
+			   (set! count-from-label 0)) ;;mod
+		    (begin (set! instruction-count (+ instruction-count 1))
+			   (set! count-from-label (+ count-from-label 1)))) ;;mod
+		(if trace? 
+		    (print "label:" label ", instruction:" (instruction-text (car insts))))
+		(if (member (list label count-from-label) breakpoints) ;;mod
+		    (print "******* break ******") ;;mod
+		    (execute))))))
+      (define (display-instruction-counting)
+	(newline)
+	(display (list 'instruction-counting instruction-count))
+	(set! instruction-count 0))
+      (define (set-reg-trace flag name)
+	(let ((reg (lookup-register name)))
+	  (reg (if flag 'trace-on 'trace-off))))
+      (define (set-breakpoint label n) ;;mod
+	(set! breakpoints (cons (list label n) breakpoints)))
+      (define (delete-breakpoint label n) ;;mod
+	(if (member (list label n) breakpoints)
+	    (set! breakpoints (delete (list label n) breakpoints))
+	    (error "Breakpoint not found: DELETE-BREAKPOINT")))
+      (define (delete-all-breakpoints) ;;mod
+	(set! breakpoints ()))
+      (define (dispatch message)
+	(cond ((eq? message 'start)
+	       (set-contents! pc the-instruction-sequence)
+	       (execute))
+	      ((eq? message 'install-instruction-sequence)
+	       (lambda (seq)
+		 (set! the-instruction-sequence seq)))
+	      ((eq? message 'allocate-register)
+	       allocate-register)
+	      ((eq? message 'get-register)
+	       lookup-register)
+	      ((eq? message 'install-operations)
+	       (lambda (ops)
+		 (set! the-ops (append the-ops ops))))
+	      ((eq? message 'stack) stack)
+	      ((eq? message 'operations) the-ops)
+	      ((eq? message 'display-instruction-counting) (display-instruction-counting))
+	      ((eq? message 'trace-on) (set! trace? #t))
+	      ((eq? message 'trace-off) (set! trace? #f))
+	      ((eq? message 'reg-trace-on) (lambda (name) (set-reg-trace #t name)))
+	      ((eq? message 'reg-trace-off) (lambda (name) (set-reg-trace #f name)))
+	      ((eq? message 'set-breakpoint) set-breakpoint) ;;mod
+	      ((eq? message 'proceed) (execute)) ;;mod
+	      ((eq? message 'delete-breakpoint) delete-breakpoint) ;;mod
+	      ((eq? message 'delete-all-breakpoints) (delete-all-breakpoints)) ;;mod
+	      (else (error "Unknown request: Machine" message))))
+      dispatch)))
+
+(define (set-breakpoint machine label n)
+  ((machine 'set-breakpoint) label n))
+(define (proceed-machine machine)
+  (machine 'proceed))
+(define (cancel-breakpoint machine label n)
+  ((machine 'delete-breakpoint) label n))
+(define (cancel-all-breakpoints machine)
+  (machine 'delete-all-breakpoints)) 
+			 
+			 
