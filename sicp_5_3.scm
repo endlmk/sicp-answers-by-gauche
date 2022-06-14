@@ -53,3 +53,42 @@
 (set-register-contents! count-leaves-machine 'tree (list x x))
 (start count-leaves-machine)
 (get-register-contents count-leaves-machine 'val)
+
+;;b
+(define count-leaves-iter-machine
+  (make-machine
+   '(tree val n tmp continue)
+   (list (list '+ +) (list 'car car) (list 'cdr cdr) (list 'null? null?) (list 'pair? pair?) (list 'not not))
+   '(controller
+     (assign continue (label done))
+     (assign n (const 0))
+     loop
+     (test (op null?) (reg tree))
+     (branch (label base1))
+     (assign tmp (op pair?) (reg tree))
+     (test (op not) (reg tmp))
+     (branch (label base2))
+     (save continue)
+     (assign continue (label iter))
+     (save tree)
+     (assign tree (op cdr) (reg tree))
+     (goto (label loop))
+     iter
+     (restore tree)
+     (restore continue)
+     (assign tree (op car) (reg tree))
+     (assign n (reg val))
+     (goto (label loop))
+     base1
+     (assign val (reg n))
+     (goto (reg continue))
+     base2
+     (assign val (op +) (reg n) (const 1))
+     (goto (reg continue))
+     done))))
+
+(define x (cons (list 1 2) (list 3 4)))
+(set-register-contents! count-leaves-iter-machine 'tree (list x x))
+(start count-leaves-iter-machine)
+(get-register-contents count-leaves-iter-machine 'val)	     
+	     
