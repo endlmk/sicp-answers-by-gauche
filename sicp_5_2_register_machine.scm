@@ -146,7 +146,7 @@
   (let ((val (assoc label-name labels)))
     (if val
 	(cdr val)
-	(error "Undefined label: ASSEMBLE"))))
+	(error "Undefined label: ASSEMBLE" label-name))))
 
 ;;5.2.3
 (define (make-execution-procedure inst labels machine pc flag stack ops)
@@ -237,7 +237,7 @@
 	((register-exp? exp)
 	 (let ((r (get-register machine (register-exp-reg exp))))
 	   (lambda () (get-contents r))))
-	(else (erro "Unknown expression type: ASSEMBLE" exp))))
+	(else (error "Unknown expression type: ASSEMBLE" exp))))
 (define (register-exp? exp) (tagged-list? exp 'reg))
 (define (register-exp-reg exp) (cadr exp))
 (define (constant-exp? exp) (tagged-list? exp 'const))
