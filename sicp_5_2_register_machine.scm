@@ -108,18 +108,18 @@
    (lambda (insts labels)
      (update-insts! insts labels machine)
      insts)))
-(define (extract-labels text recieve)
+(define (extract-labels text receive)
   (if (null? text)
-      (recieve () ())
+      (receive () ())
       (extract-labels
        (cdr text)
        (lambda (insts labels)
 	 (let ((next-inst (car text)))
 	   (if (symbol? next-inst)
-	       (recieve insts
+	       (receive insts
 			(cons (make-label-entry next-inst insts)
 			      labels))
-	       (recieve (cons (make-instruction next-inst)
+	       (receive (cons (make-instruction next-inst)
 			      insts)
 			labels)))))))
 (define (update-insts! insts labels machine)
@@ -308,7 +308,7 @@
     (let ((the-ops
 	   (list (list 'initialize-stack
 		       (lambda () (stack 'initialize)))
-		 (list 'print-statistics
+		 (list 'print-stack-statistics
 		       (lambda () (stack 'print-statistics)))))   
 	  (register-table
 	   (list (list 'pc pc) (list 'flag flag))))

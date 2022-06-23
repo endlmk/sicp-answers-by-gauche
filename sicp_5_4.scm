@@ -43,3 +43,14 @@ ev-cond-null
 ec-cond-action
 (assign unev (op cond-action) (reg exp))
 (goto (label ev-sequence))
+
+;;ex5.26
+(define (factorial n)
+  (define (iter product counter)
+    (if (> counter n)
+	product
+	(iter (* counter product) (+ counter 1))))
+  (iter 1 1))
+
+;;maximum-depth: 10
+;;total-pushes: 35*n+29
