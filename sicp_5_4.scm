@@ -44,6 +44,9 @@ ec-cond-action
 (assign unev (op cond-action) (reg exp))
 (goto (label ev-sequence))
 
+;;ex5.25
+;;skip
+
 ;;ex5.26
 (define (factorial n)
   (define (iter product counter)
@@ -54,3 +57,46 @@ ec-cond-action
 
 ;;maximum-depth: 10
 ;;total-pushes: 35*n+29
+
+;;ex5.27
+(define (factorial n) (if (= n 1) 1 (* (factorial (- n 1)) n)))
+
+;;maximum-depth: 5*n+3
+;;total-pushes: 32*n-16
+
+;;ex5.28
+;;iterative
+;;maximum-depth: 3*n+14
+;;total-pushes: 37*n+33
+
+;;recursive
+;;maximum-depth: 8*n+3
+;;total-pushes: 34*n-16
+
+;;ex5.29
+(define (fib n)
+  (if (< n 2)
+      n
+      (+ (fib (- n 1)) (fib (- n 2)))))
+;;a
+;;maximum-depth: 5*n+3
+
+;;b
+;;n=3  128
+;;n=4  240
+;;n=5  408 = S(4)+S(3)+40
+;;n=6  688 = S(5)+S(4)+40
+;;n=7 1136 = S(6)+S(5)+40
+
+;;k=40
+
+;;S(3)(=128)=a*fib(4)(=3)+b
+;;S(4)(=240)=a*fib(5)(=5)+b
+;;S(5)(=408)=a*fib(6)(=8)+b
+;;S(6)(=688)=a*fib(7)(=13)+b
+
+;;a=56
+;;b=-40
+
+;;ex5.30
+;;skip
