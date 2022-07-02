@@ -2,7 +2,7 @@
   (cond ((self-evaluating? exp) (compile-self-evaluating exp target linkage))
 	((quoted? exp) (compile-quoted exp target linkage))
 	((variable? exp) (compile-variable exp target linkage))
-	((assignement? exp) (compile-assignment exp target linkage))
+	((assignment? exp) (compile-assignment exp target linkage))
 	((definition? exp) (compile-definition exp target linkage))
 	((if? exp) (compile-if exp target linkage))
 	((lambda? exp) (compile-lambda exp target linkage))
@@ -79,10 +79,19 @@
 		     (make-instruction-sequence '(val) '()
 						`((test (op false?) (reg val))
 						  (branch (label ,f-branch))))
-		     (paralell-instruction-sequences
+		     (parallel-instruction-sequences
 		      (append-instruction-sequences t-branch c-code)
 		      (append-instruction-sequences f-branch a-code))
 		     after-if))))))
+
+(define label-counter 0)
+(define (new-label-number)
+  (set! label-counter (+ 1 label-counter))
+  label-counter)
+(define (make-label name)
+  (string->symbol
+   (string-append (symbol->string name)
+		  (number->string (new-label-number)))))
 
 (define (compile-sequence seq target linkage)
   (if (last-exp? seq)
@@ -149,7 +158,7 @@
 	      code-to-get-last-arg
 	      (preserving '(env)
 			  code-to-get-last-arg
-			  (code-to-get-rest-arg
+			  (code-to-get-rest-args
 			   (cdr operand-codes))))))))
 
 (define (code-to-get-rest-args operand-codes)
@@ -169,7 +178,7 @@
 	(compiled-branch (make-label 'compiled-branch))
 	(after-call (make-label 'after-call)))
     (let ((compiled-linkage
-	   (if (eq? linkage 'next) after-calll linkage)))
+	   (if (eq? linkage 'next) after-call linkage)))
       (append-instruction-sequences
        (make-instruction-sequence '(proc) '()
 				  `((test (op primitive-procedure?) (reg proc))
@@ -218,6 +227,8 @@
 	      (eq? linkage 'return))
 	 (error "return linkage, target not val: COMPILE"
 		target))))
+
+(define all-regs '(env proc val argl continue))
 	      
 ;;5.5.4
 (define (registers-needed s)
@@ -285,7 +296,7 @@
    (append (statements seq)
 	   (statements body-seq))))
 
-(define (parallel-instruction-sequence seq1 seq2)
+(define (parallel-instruction-sequences seq1 seq2)
   (make-instruction-sequence
    (list-union (registers-needed seq1)
 	       (registers-needed seq2))
@@ -294,7 +305,17 @@
    (append (statements seq1)
 	   (statements seq2))))
 					  
-	
+(define (parse-compiled-code lis)
+  (if (not (null? lis))
+      (begin
+        (if (pair? (caar lis))
+            (map (lambda (x)
+                         (if (symbol? x)
+                             (print x)
+                             (print "  " x)))
+                 (car lis))
+            (print (car lis)))
+        (parse-compiled-code (cdr lis)))))	
 		      
 		
 	
