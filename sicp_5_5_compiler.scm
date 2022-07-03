@@ -98,7 +98,7 @@
       (compile (first-exp seq) target linkage)
       (preserving '(env continue)
 		  (compile (first-exp seq) target 'next)
-		  (compile-sequence (rest-exp seq) target linkage))))
+		  (compile-sequence (rest-exps seq) target linkage))))
 
 (define (compile-lambda exp target linkage)
   (let ((proc-entry (make-label 'entry))
