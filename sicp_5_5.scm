@@ -318,3 +318,42 @@ after-lambda9
 
 ;;再帰版は、再帰の度にスタックを積み上げる
 ;;手続き版は、繰り返しの間でスタックは一定の深さになる
+
+;;ex5.35
+(define (f x) (+ x (g (+ x 2))))
+
+;;ex5.36
+;;右から左の順になる。construct-arglistで引数をreverseしてから処理するため。
+
+;;reverseをやめ、consをappendにする
+;;consよりappendのほうが効率が悪いので、効率は悪くなる
+(define (construct-arglist operand-codes)
+  ;;operandのreverseを削除
+  (if (null? operand-codes)
+      (make-instruction-sequence '() '(argl)
+				 '((assign argl (const ()))))
+      (let ((code-to-get-last-arg
+	     (append-instruction-sequences
+	      (car operand-codes)
+	      (make-instruction-sequence '(val) '(argl)
+					 '((assign argl (op list) (reg val)))))))
+	(if (null? (cdr operand-codes))
+	    code-to-get-last-arg
+	    (preserving '(env)
+			code-to-get-last-arg
+			(code-to-get-rest-args
+			 (cdr operand-codes)))))))
+
+(define (code-to-get-rest-args operand-codes)
+  (let ((code-for-next-arg
+	 (preserving '(argl)
+		     (car operand-codes)
+		     (make-instruction-sequence '(val argl) '(argl)
+						'((assign val (op list) (reg val)) ;;appendのためlistにする
+						  (assign argl
+							  (op append) (reg val) (reg argl))))))) ;;consをappendにする
+    (if (null? (cdr operand-codes))
+	code-for-next-arg
+	(preserving '(env)
+		    code-for-next-arg
+		    (code-to-get-rest-args (cdr operand-codes))))))
