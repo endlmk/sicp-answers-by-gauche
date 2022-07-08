@@ -6,8 +6,8 @@
 	((definition? exp) (compile-definition exp target linkage ct-env)) ;;add
 	((if? exp) (compile-if exp target linkage ct-env)) ;;add
 	((lambda? exp) (compile-lambda exp target linkage ct-env)) ;;add
-	((begin? exp) (compile-sequence exp target linkage)) 
-	((cond? exp) (compile (cond->if exp) target linkage))
+	((begin? exp) (compile-sequence exp target linkage ct-env)) ;;add 
+	((cond? exp) (compile (cond->if exp) target linkage ct-env)) ;;add
 	((application? exp) (compile-application exp target linkage ct-env)) ;;add
 	(else (error "unknown expression type: COMPILE" exp))))
 
@@ -360,3 +360,74 @@
   (let ((var (lexical-address-lookup lexical-address env)))
     (set! var val)))
 	
+;;ex5.43
+(define (compile-lambda-body exp proc-entry ct-env) ;;add
+  (let ((formulas (lambda-parameters exp)))
+    (append-instruction-sequences
+     (make-instruction-sequence '(env proc argl) '(env)
+				`(,proc-entry
+				  (assign env
+					  (op compiled-procedure-env)
+					  (reg proc))
+				  (assign env
+					  (op extend-environment)
+					  (const ,formulas)
+					  (reg argl)
+					  (reg env))))
+     (compile-sequence (scan-out-defines (lambda-body exp)) 'val 'return (cons formulas ct-env))))) ;;ex5.40
+
+;;add let
+(define (compile exp target linkage ct-env) ;;add
+  (cond ((self-evaluating? exp) (compile-self-evaluating exp target linkage))
+	((quoted? exp) (compile-quoted exp target linkage))
+	((variable? exp) (compile-variable exp target linkage ct-env)) ;;add
+	((assignment? exp) (compile-assignment exp target linkage ct-env)) ;;add
+	((definition? exp) (compile-definition exp target linkage ct-env)) ;;add
+	((if? exp) (compile-if exp target linkage ct-env)) ;;add
+	((lambda? exp) (compile-lambda exp target linkage ct-env)) ;;add
+	((let? exp) (compile (let->combination exp) target linkage ct-env)) ;; add let 
+	((begin? exp) (compile-sequence exp target linkage ct-env)) ;;add 
+	((cond? exp) (compile (cond->if exp) target linkage ct-env)) ;;add
+	((application? exp) (compile-application exp target linkage ct-env)) ;;add
+	(else (error "unknown expression type: COMPILE" exp))))
+
+;;ex5.44
+(define (compile exp target linkage ct-env) ;;add
+  (cond ((self-evaluating? exp) (compile-self-evaluating exp target linkage))
+	((quoted? exp) (compile-quoted exp target linkage))
+	((variable? exp) (compile-variable exp target linkage ct-env)) ;;add
+	((assignment? exp) (compile-assignment exp target linkage ct-env)) ;;add
+	((definition? exp) (compile-definition exp target linkage ct-env)) ;;add
+	((if? exp) (compile-if exp target linkage ct-env)) ;;add
+	((lambda? exp) (compile-lambda exp target linkage ct-env)) ;;add
+	((let? exp) (compile (let->combination exp) target linkage ct-env)) ;; add let 
+	((begin? exp) (compile-sequence exp target linkage ct-env)) ;;add 
+	((cond? exp) (compile (cond->if exp) target linkage ct-env)) ;;add
+	((opencode? exp ct-env) (compile-opencode exp target linkage ct-env)) ;;add	
+	((application? exp) (compile-application exp target linkage ct-env)) ;;add
+	(else (error "unknown expression type: COMPILE" exp))))
+
+(define (opencode? exp ct-env)
+  (let ((op (operator exp)))
+    (if (eq? (find-variable op ct-env) 'not-found)
+	#f
+	(memq op '(= * - +)))))
+
+(define (spread-arguments operands ct-env) ;;add 
+  (let ((compile1 (compile (car operands) 'arg1 'next ct-env)) ;;add
+	(compile2 (compile (cadr operands) 'arg2 'next ct-env))) ;;add
+    (list compile1 compile2)))
+	 
+(define (compile-opencode exp target linkage ct-env) ;;add
+  (if (= (length exp) 3)
+      (let ((proc (operator exp))
+	    (args (spread-arguments (operands exp) ct-env))) ;;add
+	(end-with-linkage linkage
+			  (append-instruction-sequences
+			   (car args)
+			   (preserving '(arg1)
+				       (cadr args)
+				       (make-instruction-sequence '(arg1 arg2)
+								  (list target)
+								  `((assign ,target (op ,proc) (reg arg1) (reg arg2))))))))
+      (error "Oepn code must have 2 operands: COMPILE")))
