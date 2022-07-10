@@ -17,7 +17,7 @@
 (define (empty-instruction-sequence)
   (make-instruction-sequence '() '() '()))
 
-;;5.2.2
+;;5.5.2
 (define (compile-linkage linkage)
   (cond ((eq? linkage 'return) (make-instruction-sequence '(continue) '() '((goto (reg continue)))))
 	((eq? linkage 'next) (empty-instruction-sequence))
@@ -130,7 +130,14 @@
 					  (reg argl)
 					  (reg env))))
      (compile-sequence (lambda-body exp) 'val 'return))))
-	
+
+(define (make-compiled-procedure entry env)
+  (list 'compiled-procedure entry env))
+(define (compiled-procedure? proc)
+  (tagged-list? proc 'compiled-procedure))
+(define (compiled-procedure-entry c-proc) (cadr c-proc))
+(define (compiled-procedure-env c-proc) (caddr c-proc))
+
 ;;5.5.3
 (define (compile-application exp target linkage)
   (let ((proc-code (compile (operator exp) 'proc 'next))
