@@ -922,3 +922,137 @@ after-lambda2
      (assign continue (label print-result)) ;;add
      (goto (reg val)) ;;add
      )))
+
+;;ex5.48
+(define (compile-and-run expression)
+  (let ((instructions
+	 (assemble
+	  (statements
+	   (compile expression 'val 'return))
+	  explicit-control-evaluator)))
+    (set-register-contents! explicit-control-evaluator 'val instructions)
+    (set-register-contents! explicit-control-evaluator 'flag 'true)
+    (start explicit-control-evaluator)))
+
+(define primitive-procedures
+  (list (list 'car car)
+	(list 'cdr cdr)
+	(list 'cons cons)
+	(list 'null? null?)
+	(list 'list list)
+	(list 'memq memq)
+	(list 'member member)
+	(list 'assoc assoc)
+	(list 'not not)
+	(list '= =)
+	(list '+ +)
+	(list '- -)
+	(list '* *)
+	(list '/ /)
+	(list '> >)
+	(list '< <)
+	(list 'abs abs)
+	(list 'remainder remainder)
+	(list 'print print)
+	(list 'newline newline)
+	(list 'display display)
+	(list 'eq? eq?)
+	(list 'compile-and-run compile-and-run) ;;add
+	;; more primitives...
+	))
+
+;;ex5.49
+(define (make-repl-machine) repl-machine)
+(define operations
+  (list
+   (list 'self-evaluating? self-evaluating?)
+   (list 'quoted? quoted?)
+   (list 'text-of-quotation text-of-quotation)
+   (list 'variable? variable?)
+   (list 'assignment? assignment?)
+   (list 'assignment-variable assignment-variable)
+   (list 'assignment-value assignment-value)
+   (list 'definition? definition?)
+   (list 'definition-variable definition-variable)
+   (list 'definition-value definition-value)
+   (list 'lambda? lambda?)
+   (list 'lambda-parameters lambda-parameters)
+   (list 'lambda-body lambda-body)
+   (list 'if? if?)
+   (list 'if-predicate if-predicate)
+   (list 'if-consequent if-consequent)
+   (list 'if-alternative if-alternative)
+   (list 'begin? begin?)
+   (list 'begin-actions begin-actions)
+   (list 'last-exp? last-exp?)
+   (list 'first-exp first-exp)
+   (list 'rest-exps rest-exps)
+   (list 'application? application?)
+   (list 'operator operator)
+   (list 'operands operands)
+   (list 'no-operands? no-operands?)
+   (list 'first-operand first-operand)
+   (list 'rest-operands rest-operands)
+   (list 'true? true?)
+   (list 'make-procedure make-procedure)
+   (list 'compound-procedure? compound-procedure?)
+   (list 'procedure-parameters procedure-parameters)
+   (list 'procedure-body procedure-body)
+   (list 'procedure-environment procedure-environment)
+   (list 'extend-environment extend-environment)
+   (list 'lookup-variable-value lookup-variable-value)
+   (list 'set-variable-value! set-variable-value!)
+   (list 'define-variable! define-variable!)
+   (list 'primitive-procedure? primitive-procedure?)
+   (list 'apply-primitive-procedure apply-primitive-procedure)
+   (list 'prompt-for-input prompt-for-input)
+   (list 'announce-output announce-output)
+   (list 'user-print user-print)
+   (list 'read read)
+   (list 'empty-arglist empty-arglist)
+   (list 'adjoin-arg adjoin-arg)
+   (list 'last-operand? last-operand?)
+   (list 'no-more-exps? no-more-exps?)
+   (list 'get-global-environment get-global-environment)
+   (list 'make-compiled-procedure make-compiled-procedure) ;;add
+   (list 'compiled-procedure? compiled-procedure?) ;;add
+   (list 'compiled-procedure-entry compiled-procedure-entry) ;;add
+   (list 'compiled-procedure-env compiled-procedure-env) ;;add
+   (list 'list list)
+   (list 'cons cons)
+   (list 'false? false?)
+   (list 'compile compile)
+   (list 'assemble assemble)
+   (list 'statements statements)
+   (list 'make-repl-machine make-repl-machine)
+   ))
+
+(define repl-machine
+  (make-machine
+   '(exp env val proc argl continue unev compapp machine)
+   operations
+   '((assign machine (op make-repl-machine))
+     read-eval-print-loop
+     (perform (op initialize-stack))
+     (perform (op prompt-for-input) (const ";;; REPL input:"))
+     (assign exp (op read))
+     (assign env (op get-global-environment))
+     (assign continue (label print-result))
+     (goto (label compile))
+     print-result
+     (perform (op announce-output) (const ";;; REPL value:"))
+     (perform (op user-print) (reg val))
+     (goto (label read-eval-print-loop))
+     compile
+     (assign exp (op compile) (reg exp) (const val) (const return))
+     (assign exp (op statements) (reg exp))
+     (goto (label assemble))
+     assemble
+     (assign val (op assemble) (reg exp) (reg machine))
+     (goto (reg val)))
+   ))
+
+(define (start-repl-machine)
+  (set! the-global-environment (setup-environment))
+  (set-register-contents! repl-machine 'flag 'false)
+  (start repl-machine))
