@@ -611,4 +611,37 @@ after-lambda2
   (assign val (const ok))
 #<undef>
 
+;;ex5.45
+;;a
 
+;;compile-and-go
+;;total-pushes: 6*n+1
+;;maximum-depth: 3*n-1
+
+;;eceval
+;;total-pushes: 32*n-16
+;;maximum-depth: 5*n+3
+
+;;手書き版
+;;;;total-pushes: 2*n-2
+;;maximum-depth: 2*n-2
+
+;;b
+;;factorialは基本手続きのみなので、オープンコードによる最適化が有効であると考えられる。
+
+;;ex4.46
+;;maximum-depth: 3*n-1
+
+;;total-pushes
+;;n=3 27
+;;n=4 47
+;;n=5 77 = S(4)+S(3)+3
+;;n=6 127 = S(5)+S(4)+3
+;;n=7 207 = S(6)+S(5)+3
+
+;;k=3
+
+;;S(3)(=27)=a*fib(4)(=3)+b
+;;S(4)(=47)=a*fib(5)(=5)+b
+;;S(5)(=77)=a*fib(6)(=8)+b
+;;a=10 b=-3
