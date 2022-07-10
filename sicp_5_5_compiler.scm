@@ -217,7 +217,7 @@
 	 (let ((proc-return (make-label 'proc-return)))
 	   (make-instruction-sequence '(proc) all-regs
 				      `((assign continue (label ,proc-return))
-					(assign val (op compiled-prcedure-entry)
+					(assign val (op compiled-procedure-entry)
 						(reg proc))
 					(goto (reg val))
 					,proc-return
